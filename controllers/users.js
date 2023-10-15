@@ -1,79 +1,78 @@
-const { UserModel } = require('../models/user');
+const User = require('../models/user');
+// const DefaultServerError = require('../errors/defaultServerError');
+// const NotFoundDataError = require('../errors/NotFoundDataError');
+// const ValidationError = require('../errors/ValidationError');
 
-// CRUD
+// временная middleware дает _id юзера
+// req.user._id
 
-// Create (1 user only)
-function createUser(req, res) {
-  const userData = req.body;
-  return UserModel.create(userData)
-    .then((returnedUserData) => res.status(200).send(returnedUserData))
-    .catch(() => res.status(500).send({ message: 'Server Error' }));
+const opts = { runValidators: true, new: true };
+
+// ✅ ошибки проверил
+function checkUserInBase(res, user, message) {
+  if (!user) {
+    return res.status(404).send({ message });
+  }
+  return res.status(200).send(user);
 }
 
-// Read 1 of 2 - Get 1 user
-function getUserById(req, res) {
-  const { userId } = req.params;
-  return UserModel.findById(userId)
-    .then((userData) => {
-      if (!userData) {
-        return res.status(404).send({ message: 'User Not Found' });
-      }
-      return res.status(200).send(userData);
-    })
+// ✅ ошибки проверил
+function createUser(req, res) {
+  return User.create(req.body)
+    .then((returnedUserData) => res.status(200).send(returnedUserData))
     .catch((err) => {
-      if (err.name === 'CastError') {
-        return res.status(400).send({ message: 'Invalid ID' });
+      if (err.name === 'ValidationError') {
+        return res.status(400).send({ message: 'Переданы некорректные данные при создании пользователя' });
       }
-      return res.status(500).send({ message: 'Server Error' });
+      return res.status(500).send({ message: 'Ошибка по умолчанию' });
     });
 }
 
-// Read 2 of 2 - Get ALL user
-function getUsers(req, res) {
-  console.log('GET USERS STRARTED');
-  console.log('UserModel is ', UserModel);
-  return UserModel.find()
+// ✅ ошибки проверил
+function getUserById(req, res) {
+  const { userId } = req.params;
+  const message = 'Пользователь по указанному _id не найден';
+  return User.findById(userId)
+    .then((user) => checkUserInBase(res, user, message))
+    .catch(() => res.status(500).send({ message: 'Ошибка по умолчанию' }));
+}
+
+// ✅ ошибки проверил
+function getAllUsers(req, res) {
+  return User.find()
     .then((usersData) => res.status(200).send(usersData))
-    .catch(() => res.status(500).send({ message: 'Server Error' }));
+    .catch(() => res.status(500).send({ message: 'Ошибка по умолчанию' }));
 }
 
-// Update 1 - update user
+// ✅ ошибки проверил
 function updateUser(req, res) {
-  console.log('STARTED updateUser');
-
-  const { userId } = req.params;
-  console.log('userId from updateUser : ', userId);
-
-  const userData = req.body;
-  console.log('userData from updateUser : ', userData);
-
-  return UserModel.findByIdAndUpdate(userId, userData)
-    .then((updatedUserData) => res.status(200).send(updatedUserData))
-    .catch(() => res.status(500).send({ message: 'Server Error' }));
+  const message = 'Пользователь с указанным _id не найден';
+  return User.findByIdAndUpdate(req.user._id, req.body, opts)
+    .then((user) => checkUserInBase(res, user, message))
+    .catch((err) => {
+      if (err.name === 'ValidationError') {
+        return res.status(400).send({ message: 'Переданы некорректные данные при обновлении профиля' });
+      }
+      return res.status(500).send({ message: 'Ошибка по умолчанию' });
+    });
 }
 
-// Update 1 - update avatar
+// ✅ ошибки проверил
 function updateAvatar(req, res) {
-  console.log('req.params', req.params);
-  const { userId } = req.params;
-  return UserModel.findByIdAndUpdate(userId)
-    .then((returnedUserData) => res.status(200).send(returnedUserData))
-    .catch(() => res.status(500).send({ message: 'Server Error' }));
-}
-
-// Delete
-function deleteUser(req, res) {
-  const { userId } = req.params;
-  return UserModel.findByIdAndDelete(userId)
-    .then((data) => res.status(200).send(data))
-    .catch(() => res.status(500).send({ message: 'Server Error' }));
+  return User.findByIdAndUpdate(req.user._id, req.body, opts)
+    .then((returnedAvatarData) => checkUserInBase(res, returnedAvatarData))
+    .catch((err) => {
+      if (err.name === 'ValidationError') {
+        return res.status(400).send({ message: 'Переданы некорректные данные при обновлении профиля' });
+      }
+      return res.status(500).send({ message: 'Ошибка по умолчанию' });
+    });
 }
 
 module.exports = {
   createUser,
   getUserById,
-  getUsers,
+  getAllUsers,
   updateUser,
   updateAvatar,
-  deleteUser,
 };

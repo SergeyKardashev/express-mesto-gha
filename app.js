@@ -3,12 +3,17 @@ const mongoose = require('mongoose');
 const {
   createUser,
   getUserById,
-  getUsers,
+  getAllUsers,
   updateUser,
   updateAvatar,
-  deleteUser,
 } = require('./controllers/users');
-const { createCard, getCards, deleteCard } = require('./controllers/cards');
+const {
+  createCard,
+  getCards,
+  likeCard,
+  dislikeCard,
+  deleteCard,
+} = require('./controllers/cards');
 
 const { PORT = 3000 } = process.env;
 
@@ -22,9 +27,11 @@ const app = express();
 
 app.use(express.json());
 
+// =========== временная мидлвара ===============
 app.use((req, res, next) => {
   req.user = {
-    _id: '65293b7b592661671049f81d',
+    // _id: '00000b0b000000000000b00b',
+    _id: '652ba457451ba72e27d7043e',
   };
   next();
 });
@@ -32,31 +39,15 @@ app.use((req, res, next) => {
 // =========== подключаю статику ===============
 app.use(express.static('public'));
 
-// CRUD
-
-// Create - создаю карточку
 app.post('/cards', createCard);
-
-// Create - создаю юзера
 app.post('/users', createUser);
-
-// Update - обновляю аватарку
 app.patch('/users/me/avatar', updateAvatar);
-
-// Update - обновляю юзера
 app.patch('/users/me', updateUser);
-
-// Read 1 of 2 - получаю 1 юзера
 app.get('/users/:userId', getUserById);
-
-// Read 2 of 2 - получаю ВСЕХ юзеров
-app.get('/users', getUsers);
-
+app.get('/users', getAllUsers);
 app.get('/cards', getCards);
-
-// Delete - удаляю юзера
-app.delete('/users/:userId', deleteUser);
-
+app.put('/cards/:cardId/likes', likeCard);
+app.delete('/cards/:cardId/likes', dislikeCard);
 app.delete('/cards/:cardId', deleteCard);
 
 app.listen(PORT, () => {
