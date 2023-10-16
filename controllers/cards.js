@@ -6,10 +6,11 @@ const handleDefaultError = require('../validators/defaultError');
 // временная middleware дает _id юзера req.user._id
 
 // ✅ ошибки добавил, ✅ проверил
-function getCards(req, res) {
+function getAllCards(req, res) {
   Card.find()
-    .then((сardsData) => res.status(200).send(сardsData))
-    .catch(() => handleDefaultError(res));
+    .then((data) => res.status(200).send(data))
+    // .catch(() => handleDefaultError(res));
+    .catch(console.log);
 }
 
 // ✅ ошибки добавил, ✅ проверил
@@ -66,7 +67,7 @@ function deleteCard(req, res) {
 }
 module.exports = {
   createCard,
-  getCards,
+  getAllCards,
   likeCard,
   dislikeCard,
   deleteCard,

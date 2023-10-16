@@ -1,7 +1,6 @@
 const express = require('express');
 const mongoose = require('mongoose');
-const userRouter = require('./routes/usersRouter');
-const cardsRouter = require('./routes/usersRouter');
+const unitedRouter = require('./routes/index');
 
 const { PORT = 3000 } = process.env;
 
@@ -12,17 +11,7 @@ mongoose
 const app = express();
 
 app.use(express.json());
-app.use(userRouter);
-app.use(cardsRouter);
-
-// =========== временная мидлвара ===============
-app.use((req, res, next) => {
-  req.user = {
-    // _id: '00000b0b000000000000b00b',
-    _id: '652ba457451ba72e27d7043e',
-  };
-  next();
-});
+app.use(unitedRouter);
 
 // =========== подключаю статику ===============
 app.use(express.static('public'));
