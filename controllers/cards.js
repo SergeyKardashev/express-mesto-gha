@@ -13,9 +13,7 @@ function getAllCards(req, res) {
 }
 
 function createCard(req, res) {
-  const { name, link } = req.body;
-  const owner = req.user._id; // 🟡 hardcode
-  return Card.create({ name, link, owner })
+  return Card.create({ name: req.body.name, link: req.body.link, owner: req.user._id })
     .then((cardData) => res.status(200).send(cardData))
     .catch((err) => {
       checkErrName(err, res, 'Переданы некорректные данные при создании карточки');
