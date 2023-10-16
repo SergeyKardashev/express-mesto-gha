@@ -55,7 +55,12 @@ function dislikeCard(req, res) {
     { new: true },
   )
     .then((data) => checkUserInBase(res, data, 'Передан несуществующий _id карточки'))
-    .catch(() => handleDefaultError(res));
+    .catch((err) => {
+      if (err.name === 'ValidationError') {
+        return res.status(400).send({ message: 'Переданы некорректные данные для постановки/снятии лайка' });
+      }
+      return handleDefaultError(res);
+    });
 }
 
 // ✅ ошибки добавил, ✅ проверил

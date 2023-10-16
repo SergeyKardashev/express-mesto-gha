@@ -11,7 +11,7 @@ appRouter.use((req, res, next) => {
   next();
 });
 
-appRouter.use(usersRouter);
-appRouter.use(cardsRouter);
+appRouter.use('/users', usersRouter);
+appRouter.use('/cards', cardsRouter);
 
 module.exports = appRouter;

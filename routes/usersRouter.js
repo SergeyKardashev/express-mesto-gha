@@ -7,10 +7,14 @@ const {
   updateAvatar,
 } = require('../controllers/users');
 
-usersRouter.post('/users', createUser);
-usersRouter.patch('/users/me/avatar', updateAvatar);
-usersRouter.patch('/users/me', updateUser);
-usersRouter.get('/users/:userId', getUserById);
-usersRouter.get('/users', getAllUsers);
+// в мегароутере appRouter в routes/index.js прописано
+// что все роуты, начинающиеся с /users обрабатываются
+// роутером usersRouter (этот)
+
+usersRouter.post('/', createUser);
+usersRouter.patch('/me/avatar', updateAvatar);
+usersRouter.patch('/me', updateUser);
+usersRouter.get('/:userId', getUserById);
+usersRouter.get('/', getAllUsers);
 
 module.exports = usersRouter;
