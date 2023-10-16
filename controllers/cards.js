@@ -1,57 +1,68 @@
 const Card = require('../models/card');
+const checkUserInBase = require('../validators/checkUserInBase');
+const handleDefaultError = require('../validators/defaultError');
 
 // мидлвара  добавляет в каждый запрос объект user.
-// Берите из него идентификатор пользователя в контроллере создания карточки
-// console.log('user._id from request is ', req.user._id); // _id станет доступен
+// временная middleware дает _id юзера req.user._id
 
+// ✅ ошибки добавил, ✅ проверил
+function getCards(req, res) {
+  Card.find()
+    .then((сardsData) => res.status(200).send(сardsData))
+    .catch(() => handleDefaultError(res));
+}
+
+// ✅ ошибки добавил, ✅ проверил
 function createCard(req, res) {
   const { name, link } = req.body;
   const owner = req.user._id; // 🟡 hardcode
   return Card.create({ name, link, owner })
     .then((cardData) => res.status(200).send(cardData))
-    .catch(() => res.status(500).send({ message: 'Server Error' }));
-}
-
-function getCards(req, res) {
-  Card.find()
-    .then((returdedCardsData) => res.status(200).send(returdedCardsData))
     .catch((err) => {
-      console.log(err);
-      return res.status(500).send({ message: 'Server Error' });
+      if (err.name === 'ValidationError') {
+        return res.status(400).send({ message: 'Переданы некорректные данные при создании карточки' });
+      }
+      return handleDefaultError(res);
     });
 }
 
-// поставить лайк карточке
+// ✅ ошибки добавил, 🟡 есть нюанс
 function likeCard(req, res) {
+  // 🟡 не ясно какие данные можно передать неверные чтобы получить 400
+  // 🟡 не ошибка если айди юзера липовый.
   return Card.findByIdAndUpdate(
     req.params.cardId,
-    { $addToSet: { likes: req.user._id } }, // добавить _id в массив, если его там нет
+    { $addToSet: { likes: req.user._id } },
     { new: true },
   )
-    .then((data) => res.status(200).send(data))
-    .catch(() => res.status(500).send({ message: 'Ошибка по умолчанию' }));
+    .then((data) => { checkUserInBase(res, data, 'Передан несуществующий _id карточки'); })
+    .catch((err) => {
+      if (err.name === 'ValidationError') {
+        return res.status(400).send({ message: 'Переданы некорректные данные для постановки/снятии лайка' });
+      }
+      return handleDefaultError(res);
+    });
 }
 
-// Убрать лайк с карточки
+// ✅ ошибки добавил, 🟡 есть нюанс
 function dislikeCard(req, res) {
+  // 🟡 не ясно какие данные можно передать неверные чтобы получить 400
+  // 🟡 не ошибка если неверный айди ЮЗЕРА
   return Card.findByIdAndUpdate(
     req.params.cardId,
     { $pull: { likes: req.user._id } },
     { new: true },
   )
-    .then((data) => res.status(200).send(data))
-    .catch(() => res.status(500).send({ message: 'Ошибка по умолчанию' }));
+    .then((data) => checkUserInBase(res, data, 'Передан несуществующий _id карточки'))
+    .catch(() => handleDefaultError(res));
 }
 
+// ✅ ошибки добавил, ✅ проверил
 function deleteCard(req, res) {
-  const cardId = req.body.id;
-  console.log('cardId', cardId);
-  Card.findByIdAndDelete(cardId)
-    .then((returdedCardData) => res.status(200).send(returdedCardData))
-    .catch((err) => {
-      console.log(err);
-      return res.status(500).send({ message: 'Server Error' });
-    });
+  // 404 — Карточка с указанным _id не найдена.
+  Card.findByIdAndDelete(req.body.id)
+    .then((data) => { checkUserInBase(res, data, 'Карточка с указанным _id не найдена'); })
+    .catch(() => handleDefaultError(res));
 }
 module.exports = {
   createCard,
