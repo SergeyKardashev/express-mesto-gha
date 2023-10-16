@@ -1,6 +1,6 @@
 const express = require('express');
 const mongoose = require('mongoose');
-const unitedRouter = require('./routes/index');
+const appRouter = require('./routes/index');
 
 const { PORT = 3000 } = process.env;
 
@@ -11,7 +11,7 @@ mongoose
 const app = express();
 
 app.use(express.json());
-app.use(unitedRouter);
+app.use(appRouter);
 
 // =========== подключаю статику ===============
 app.use(express.static('public'));
