@@ -1,6 +1,7 @@
 const Card = require('../models/card');
-const checkUserInBase = require('../validators/checkUserInBase');
-const handleDefaultError = require('../validators/defaultError');
+const checkUserInBase = require('../utils/checkUserInBase');
+const handleDefaultError = require('../utils/defaultError');
+const checkErrName = require('../utils/checkErrName');
 
 // мидлвара  добавляет в каждый запрос объект user.
 // временная middleware дает _id юзера req.user._id
@@ -17,9 +18,7 @@ function createCard(req, res) {
   return Card.create({ name, link, owner })
     .then((cardData) => res.status(200).send(cardData))
     .catch((err) => {
-      if (err.name === 'ValidationError') {
-        return res.status(400).send({ message: 'Переданы некорректные данные при создании карточки' });
-      }
+      checkErrName(err, res, 'Переданы некорректные данные при создании карточки');
       return handleDefaultError(res);
     });
 }
@@ -32,9 +31,7 @@ function likeCard(req, res) {
   )
     .then((data) => { checkUserInBase(res, data, 'Передан несуществующий _id карточки'); })
     .catch((err) => {
-      if (err.name === 'ValidationError') {
-        return res.status(400).send({ message: 'Переданы некорректные данные для постановки/снятии лайка' });
-      }
+      checkErrName(err, res, 'Переданы некорректные данные для постановки/снятии лайка');
       return handleDefaultError(res);
     });
 }
@@ -47,9 +44,7 @@ function dislikeCard(req, res) {
   )
     .then((data) => checkUserInBase(res, data, 'Передан несуществующий _id карточки'))
     .catch((err) => {
-      if (err.name === 'ValidationError') {
-        return res.status(400).send({ message: 'Переданы некорректные данные для постановки/снятии лайка' });
-      }
+      checkErrName(err, res, 'Переданы некорректные данные для постановки/снятии лайка');
       return handleDefaultError(res);
     });
 }

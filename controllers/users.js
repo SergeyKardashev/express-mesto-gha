@@ -1,6 +1,7 @@
 const User = require('../models/user');
-const checkUserInBase = require('../validators/checkUserInBase');
-const handleDefaultError = require('../validators/defaultError');
+const checkUserInBase = require('../utils/checkUserInBase');
+const handleDefaultError = require('../utils/defaultError');
+const checkErrName = require('../utils/checkErrName');
 // const DefaultServerError = require('../errors/defaultServerError');
 // const NotFoundDataError = require('../errors/NotFoundDataError');
 // const ValidationError = require('../errors/ValidationError');
@@ -25,9 +26,7 @@ function createUser(req, res) {
   return User.create(req.body)
     .then((data) => res.status(200).send(data))
     .catch((err) => {
-      if (err.name === 'ValidationError') {
-        return res.status(400).send({ message: 'Переданы некорректные данные при создании пользователя' });
-      }
+      checkErrName(err, res, 'Переданы некорректные данные при создании пользователя');
       return handleDefaultError(res);
     });
 }
@@ -36,9 +35,7 @@ function updateUser(req, res) {
   return User.findByIdAndUpdate(req.user._id, req.body, opts)
     .then((userData) => checkUserInBase(res, userData, 'Пользователь с указанным _id не найден'))
     .catch((err) => {
-      if (err.name === 'ValidationError') {
-        return res.status(400).send({ message: 'Переданы некорректные данные при обновлении профиля' });
-      }
+      checkErrName(err, res, 'Переданы некорректные данные при обновлении профиля');
       return handleDefaultError(res);
     });
 }
@@ -47,9 +44,7 @@ function updateAvatar(req, res) {
   return User.findByIdAndUpdate(req.user._id, req.body, opts)
     .then((avatarData) => checkUserInBase(res, avatarData, 'Пользователь с указанным _id не найден'))
     .catch((err) => {
-      if (err.name === 'ValidationError') {
-        return res.status(400).send({ message: 'Переданы некорректные данные при обновлении аватара' });
-      }
+      checkErrName(err, res, 'Переданы некорректные данные при обновлении аватара');
       return handleDefaultError(res);
     });
 }
