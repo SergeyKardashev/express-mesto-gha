@@ -5,15 +5,12 @@ const handleDefaultError = require('../validators/defaultError');
 // мидлвара  добавляет в каждый запрос объект user.
 // временная middleware дает _id юзера req.user._id
 
-// ✅ ошибки добавил, ✅ проверил
 function getAllCards(req, res) {
   Card.find()
     .then((data) => res.status(200).send(data))
-    // .catch(() => handleDefaultError(res));
-    .catch(console.log);
+    .catch(() => handleDefaultError(res));
 }
 
-// ✅ ошибки добавил, ✅ проверил
 function createCard(req, res) {
   const { name, link } = req.body;
   const owner = req.user._id; // 🟡 hardcode
@@ -27,10 +24,7 @@ function createCard(req, res) {
     });
 }
 
-// ✅ ошибки добавил, 🟡 есть нюанс
 function likeCard(req, res) {
-  // 🟡 не ясно какие данные можно передать неверные чтобы получить 400
-  // 🟡 не ошибка если айди юзера липовый.
   return Card.findByIdAndUpdate(
     req.params.cardId,
     { $addToSet: { likes: req.user._id } },
@@ -45,10 +39,7 @@ function likeCard(req, res) {
     });
 }
 
-// ✅ ошибки добавил, 🟡 есть нюанс
 function dislikeCard(req, res) {
-  // 🟡 не ясно какие данные можно передать неверные чтобы получить 400
-  // 🟡 не ошибка если неверный айди ЮЗЕРА
   return Card.findByIdAndUpdate(
     req.params.cardId,
     { $pull: { likes: req.user._id } },
@@ -63,9 +54,7 @@ function dislikeCard(req, res) {
     });
 }
 
-// ✅ ошибки добавил, ✅ проверил
 function deleteCard(req, res) {
-  // 404 — Карточка с указанным _id не найдена.
   Card.findByIdAndDelete(req.body.id)
     .then((data) => { checkUserInBase(res, data, 'Карточка с указанным _id не найдена'); })
     .catch(() => handleDefaultError(res));

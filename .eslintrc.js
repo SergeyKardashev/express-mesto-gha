@@ -20,7 +20,7 @@ module.exports = {
     ecmaVersion: 'latest',
   },
   rules: {
-    'no-underscore-dangle': ['error', { allow: ['foo_', '_id'] }],
+    'no-underscore-dangle': ['error', { allow: ['_id'] }],
     // semi: ['error', 'always'],
     // quotes: ['error', 'double'],
   },
