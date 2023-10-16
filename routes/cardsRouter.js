@@ -7,9 +7,7 @@ const {
   deleteCard,
 } = require('../controllers/cards');
 
-// в мегароутере appRouter в routes/index.js прописано
-// что все роуты, начинающиеся с /cards обрабатываются
-// роутером cardsRouter (этот)
+// в appRouter прописал что роуты, начинающиеся с /users обрабатываются этим usersRouter
 
 cardsRouter.post('/', createCard);
 cardsRouter.get('/', getAllCards);

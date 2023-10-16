@@ -2,19 +2,19 @@ const Card = require('../models/card');
 const checkUserInBase = require('../utils/checkUserInBase');
 const handleDefaultError = require('../utils/defaultError');
 const checkErrName = require('../utils/checkErrName');
+const { ok, created } = require('../utils/errorCodes');
 
-// мидлвара  добавляет в каждый запрос объект user.
-// временная middleware дает _id юзера req.user._id
+// tmp мидлвэра добавляет объект user в запросы. req.user._id
 
 function getAllCards(req, res) {
   Card.find()
-    .then((data) => res.status(200).send(data))
+    .then((data) => res.status(ok).send(data))
     .catch(() => handleDefaultError(res));
 }
 
 function createCard(req, res) {
   return Card.create({ name: req.body.name, link: req.body.link, owner: req.user._id })
-    .then((cardData) => res.status(200).send(cardData))
+    .then((data) => res.status(created).send(data))
     .catch((err) => {
       checkErrName(err, res, 'Переданы некорректные данные при создании карточки');
       return handleDefaultError(res);

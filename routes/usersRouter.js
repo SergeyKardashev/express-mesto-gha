@@ -7,9 +7,7 @@ const {
   updateAvatar,
 } = require('../controllers/users');
 
-// в мегароутере appRouter в routes/index.js прописано
-// что все роуты, начинающиеся с /users обрабатываются
-// роутером usersRouter (этот)
+// в appRouter прописал что роуты, начинающиеся с /users обрабатываются этим usersRouter
 
 usersRouter.post('/', createUser);
 usersRouter.patch('/me/avatar', updateAvatar);

@@ -1,6 +1,8 @@
+const { notFound, ok } = require('./errorCodes');
+
 module.exports = function checkUserInBase(res, user, message) {
   if (!user) {
-    return res.status(404).send({ message });
+    return res.status(notFound).send({ message });
   }
-  return res.status(200).send(user);
+  return res.status(ok).send(user);
 };

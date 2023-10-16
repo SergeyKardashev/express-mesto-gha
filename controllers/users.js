@@ -2,9 +2,7 @@ const User = require('../models/user');
 const checkUserInBase = require('../utils/checkUserInBase');
 const handleDefaultError = require('../utils/defaultError');
 const checkErrName = require('../utils/checkErrName');
-// const DefaultServerError = require('../errors/defaultServerError');
-// const NotFoundDataError = require('../errors/NotFoundDataError');
-// const ValidationError = require('../errors/ValidationError');
+const { ok, created } = require('../utils/errorCodes');
 
 // tmp мидлвэра добавляет объект user в запросы. req.user._id
 
@@ -12,19 +10,19 @@ const opts = { runValidators: true, new: true };
 
 function getAllUsers(req, res) {
   return User.find()
-    .then((usersData) => res.status(200).send(usersData))
+    .then((data) => res.status(ok).send(data))
     .catch(() => handleDefaultError(res));
 }
 
 function getUserById(req, res) {
   return User.findById(req.params.userId)
-    .then((userData) => checkUserInBase(res, userData, 'Пользователь по указанному _id не найден'))
+    .then((data) => checkUserInBase(res, data, 'Пользователь по указанному _id не найден'))
     .catch(() => handleDefaultError(res));
 }
 
 function createUser(req, res) {
   return User.create(req.body)
-    .then((data) => res.status(200).send(data))
+    .then((data) => res.status(created).send(data))
     .catch((err) => {
       checkErrName(err, res, 'Переданы некорректные данные при создании пользователя');
       return handleDefaultError(res);
