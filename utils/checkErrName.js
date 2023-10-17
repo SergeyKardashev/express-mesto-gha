@@ -1,4 +1,4 @@
-const { badRequest, notFound, ok } = require('./errorCodes');
+const { badRequest } = require('./errorCodes');
 
 function checkErrName(err, res, message) {
   if (err.name === 'ValidationError') {
@@ -24,17 +24,8 @@ function checkIfCastErr(err, res, message) {
   return res;
 }
 
-function checkIfDataFromDB(res, dataFromDB, message) {
-  console.log('AAAAA start checkIfDataFromDB from external file');
-  if (!dataFromDB) {
-    return res.status(notFound).send({ message });
-  }
-  return res.status(ok).send(dataFromDB);
-}
-
 module.exports = {
   checkErrName,
   checkIfValidationError,
   checkIfCastErr,
-  checkIfDataFromDB,
 };
