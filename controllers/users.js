@@ -46,7 +46,6 @@ function createUser(req, res) {
       .send({
         name: dataFromDB.name,
         about: dataFromDB.about,
-        avatar: dataFromDB.avatar,
         _id: dataFromDB._id,
       }))
     .catch((err) => {
