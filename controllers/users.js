@@ -2,7 +2,7 @@ const User = require('../models/user');
 const checkUserInBase = require('../utils/checkUserInBase');
 const handleDefaultError = require('../utils/defaultError');
 const checkErrName = require('../utils/checkErrName');
-const { ok, created } = require('../utils/errorCodes');
+const { ok, notFound, created } = require('../utils/errorCodes');
 
 // tmp мидлвэра добавляет объект user в запросы. req.user._id
 
@@ -38,14 +38,38 @@ function updateUser(req, res) {
     });
 }
 
+// 🟡 new version 🟡 // findByIdAndUpdate(id, updateObject, options)
+// подаю user._id из мидлвэры. Если в ответ пусто, значит юзера нет. В ответ шлю только поле АВА
 function updateAvatar(req, res) {
-  return User.findByIdAndUpdate(req.user._id, req.body, opts)
-    .then((avatarData) => checkUserInBase(res, avatarData, 'Пользователь с указанным _id не найден'))
+  const id = req.user._id;
+  // console.log(' IIIIIII id is ', id); // 652ba457451ba72e27d7043e comes from middleware
+  const updateObject = req.body;
+  // console.log(' OOOOO newData is', updateObject); // { avatar: '======== +++++++++ +++++++++' }
+  return User.findByIdAndUpdate(id, updateObject, opts)
+    // 🟡
+    .then((returnedData) => {
+      if (!returnedData) {
+        return res.status(notFound).send({ message: 'Пользователь с указанным _id не найде' });
+      }
+      // console.log(' XXXXXX returnedData is ', returnedData);
+      // console.log(' WWWWWW returnedData.avatar is ', returnedData.avatar);
+      return res.status(ok).send(returnedData.avatar);
+    })
     .catch((err) => {
       checkErrName(err, res, 'Переданы некорректные данные при обновлении аватара');
       return handleDefaultError(res);
     });
 }
+
+// function updateAvatar(req, res) {
+//   return User.findByIdAndUpdate(req.user._id, req.body, opts)
+//     .then((avatarData) =>
+// checkUserInBase(res, avatarData, 'Пользователь с указанным _id не найден'))
+//     .catch((err) => {
+//       checkErrName(err, res, 'Переданы некорректные данные при обновлении аватара');
+//       return handleDefaultError(res);
+//     });
+// }
 
 module.exports = {
   createUser,
