@@ -1,8 +1,13 @@
 const User = require('../models/user');
 const checkUserInBase = require('../utils/checkUserInBase');
 const handleDefaultError = require('../utils/defaultError');
-const checkErrName = require('../utils/checkErrName');
 const { ok, created } = require('../utils/errorCodes');
+const {
+  checkErrName,
+  checkIfValidationError,
+  checkIfCastErr,
+  checkIfDataFromDB,
+} = require('../utils/checkErrName');
 
 // tmp мидлвэра добавляет объект user в запросы. req.user._id
 
@@ -16,8 +21,14 @@ function getAllUsers(req, res) {
 
 function getUserById(req, res) {
   return User.findById(req.params.userId)
-    .then((data) => checkUserInBase(res, data, 'Пользователь по указанному _id не найден'))
-    .catch(() => handleDefaultError(res));
+    .then((dataFromDB) => {
+      checkIfDataFromDB(res, dataFromDB, 'Пользователь по указанному _id не найден');
+    })
+    .catch((err) => {
+      checkIfCastErr(err, res, 'Получение пользователя с некорректным id');
+      checkIfValidationError(err, res, 'Получение пользователя с некорректным id');
+      return handleDefaultError(res);
+    });
 }
 
 function createUser(req, res) {
