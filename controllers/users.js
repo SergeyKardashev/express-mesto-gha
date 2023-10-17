@@ -10,6 +10,7 @@ const {
 // tmp мидлвэра добавляет объект user в запросы. req.user._id
 
 const opts = { runValidators: true, new: true };
+// const opts = { new: true, runValidators: true };
 
 function getAllUsers(req, res) {
   return User.find()
@@ -55,13 +56,10 @@ function updateUser(req, res) {
   return User.findByIdAndUpdate(req.user._id, req.body, opts)
     .then((dataFromDB) => {
       if (!dataFromDB) {
+        console.log('Кажись от базы пришел ноль');
         return res.status(notFound).send({ message: 'Пользователь с указанным _id не найден' });
       }
-      return res.status(ok)
-        .send({
-          name: dataFromDB.name,
-          about: dataFromDB.about,
-        });
+      return res.status(ok).send({ name: dataFromDB.name, about: dataFromDB.about });
     })
     .catch((err) => {
       if (err.name === 'CastError' || err.name === 'ValidationError') {
