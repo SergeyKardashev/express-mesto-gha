@@ -47,7 +47,7 @@ function createUser(req, res) {
         name: dataFromDB.name,
         about: dataFromDB.about,
         avatar: dataFromDB.avatar,
-        id: dataFromDB._id,
+        _id: dataFromDB._id,
       }))
     .catch((err) => {
       if (err.name === 'CastError' || err.name === 'ValidationError') {
