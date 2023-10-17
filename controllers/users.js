@@ -1,7 +1,3 @@
-// const checkUserInBase = require('../utils/checkUserInBase');
-// const handleDefaultError = require('../utils/defaultError');
-// const { checkIfValidationError } = require('../utils/checkErrName');
-// const checkIfDataFromDB = require('../utils/checkIfDataFromDB');
 const User = require('../models/user');
 const {
   notFound,
@@ -40,8 +36,6 @@ function getUserById(req, res) {
 
 function createUser(req, res) {
   return User.create(req.body)
-  // .then((data) => res.status(created).send(data))
-  // чтобы не возвращать лишние поля, возвращаю 3 поля
     .then((dataFromDB) => res.status(created)
       .send({
         name: dataFromDB.name,
@@ -64,7 +58,10 @@ function updateUser(req, res) {
         return res.status(notFound).send({ message: 'Пользователь с указанным _id не найден' });
       }
       return res.status(ok)
-        .send({ name: dataFromDB.name, about: dataFromDB.about });
+        .send({
+          name: dataFromDB.name,
+          about: dataFromDB.about,
+        });
     })
     .catch((err) => {
       if (err.name === 'CastError' || err.name === 'ValidationError') {
