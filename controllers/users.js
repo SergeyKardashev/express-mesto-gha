@@ -43,7 +43,12 @@ function createUser(req, res) {
   // .then((data) => res.status(created).send(data))
   // чтобы не возвращать лишние поля, возвращаю 3 поля
     .then((dataFromDB) => res.status(created)
-      .send({ name: dataFromDB.name, about: dataFromDB.about, avatar: dataFromDB.avatar }))
+      .send({
+        name: dataFromDB.name,
+        about: dataFromDB.about,
+        avatar: dataFromDB.avatar,
+        id: dataFromDB._id,
+      }))
     .catch((err) => {
       if (err.name === 'CastError' || err.name === 'ValidationError') {
         return res.status(badRequest).send({ message: 'Переданы некорректные данные при создании пользователя' });
