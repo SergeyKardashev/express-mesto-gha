@@ -21,7 +21,7 @@ function createCard(req, res) {
       .send({
         name: dataFromDB.name,
         link: dataFromDB.link,
-        owner: dataFromDB._id,
+        _id: dataFromDB._id,
       }))
     .catch((err) => {
       if (err.name === 'CastError' || err.name === 'ValidationError') {
