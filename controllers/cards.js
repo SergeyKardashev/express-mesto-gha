@@ -1,23 +1,32 @@
+// const checkUserInBase = require('../utils/checkUserInBase');
+// const handleDefaultError = require('../utils/defaultError');
+// const checkErrName = require('../utils/checkErrName');
 const Card = require('../models/card');
-const checkUserInBase = require('../utils/checkUserInBase');
-const handleDefaultError = require('../utils/defaultError');
-const checkErrName = require('../utils/checkErrName');
-const { ok, created } = require('../utils/errorCodes');
+const {
+  notFound,
+  badRequest,
+  ok,
+  created,
+  InternalServerError,
+} = require('../constants/errorCodes');
 
 // tmp мидлвэра добавляет объект user в запросы. req.user._id
 
 function getAllCards(req, res) {
   Card.find()
-    .then((data) => res.status(ok).send(data))
-    .catch(() => handleDefaultError(res));
+    .then((dataFromDB) => res.status(ok).send(dataFromDB))
+    .catch(() => res.status(InternalServerError).send({ message: 'Ошибка по умолчанию' }));
 }
 
 function createCard(req, res) {
   return Card.create({ name: req.body.name, link: req.body.link, owner: req.user._id })
-    .then((data) => res.status(created).send(data))
+    .then((dataFromDB) => res.status(created)
+      .send({ name: dataFromDB.name, link: dataFromDB.link, owner: dataFromDB._id }))
     .catch((err) => {
-      checkErrName(err, res, 'Переданы некорректные данные при создании карточки');
-      return handleDefaultError(res);
+      if (err.name === 'CastError' || err.name === 'ValidationError') {
+        return res.status(badRequest).send({ message: 'Переданы некорректные данные при создании карточки' });
+      }
+      return res.status(InternalServerError).send({ message: 'Ошибка по умолчанию' });
     });
 }
 
@@ -27,10 +36,18 @@ function likeCard(req, res) {
     { $addToSet: { likes: req.user._id } },
     { new: true },
   )
-    .then((data) => { checkUserInBase(res, data, 'Передан несуществующий _id карточки'); })
+    .then((dataFromDB) => {
+      if (!dataFromDB) {
+        return res.status(notFound).send({ message: 'Передан несуществующий _id карточки' });
+      }
+      return res.status(ok)
+        .send({ name: dataFromDB.name, about: dataFromDB.about });
+    })
     .catch((err) => {
-      checkErrName(err, res, 'Переданы некорректные данные для постановки/снятии лайка');
-      return handleDefaultError(res);
+      if (err.name === 'CastError' || err.name === 'ValidationError') {
+        return res.status(badRequest).send({ message: 'Переданы некорректные данные для постановки/снятии лайка' });
+      }
+      return res.status(InternalServerError).send({ message: 'Ошибка по умолчанию' });
     });
 }
 
@@ -40,17 +57,31 @@ function dislikeCard(req, res) {
     { $pull: { likes: req.user._id } },
     { new: true },
   )
-    .then((data) => checkUserInBase(res, data, 'Передан несуществующий _id карточки'))
+    .then((dataFromDB) => {
+      if (!dataFromDB) {
+        return res.status(notFound).send({ message: 'Передан несуществующий _id карточки' });
+      }
+      return res.status(ok)
+        .send({ name: dataFromDB.name, about: dataFromDB.about });
+    })
     .catch((err) => {
-      checkErrName(err, res, 'Переданы некорректные данные для постановки/снятии лайка');
-      return handleDefaultError(res);
+      if (err.name === 'CastError' || err.name === 'ValidationError') {
+        return res.status(badRequest).send({ message: 'Переданы некорректные данные для постановки/снятии лайка' });
+      }
+      return res.status(InternalServerError).send({ message: 'Ошибка по умолчанию' });
     });
 }
 
 function deleteCard(req, res) {
   Card.findByIdAndDelete(req.body.id)
-    .then((data) => { checkUserInBase(res, data, 'Карточка с указанным _id не найдена'); })
-    .catch(() => handleDefaultError(res));
+    .then((dataFromDB) => {
+      if (!dataFromDB) {
+        return res.status(notFound).send({ message: 'Карточка с указанным _id не найдена' });
+      }
+      return res.status(ok)
+        .send({ name: dataFromDB.name, about: dataFromDB.about });
+    })
+    .catch(() => res.status(InternalServerError).send({ message: 'Ошибка по умолчанию' }));
 }
 module.exports = {
   createCard,

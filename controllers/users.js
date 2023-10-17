@@ -1,15 +1,15 @@
-const User = require('../models/user');
 // const checkUserInBase = require('../utils/checkUserInBase');
 // const handleDefaultError = require('../utils/defaultError');
 // const { checkIfValidationError } = require('../utils/checkErrName');
 // const checkIfDataFromDB = require('../utils/checkIfDataFromDB');
+const User = require('../models/user');
 const {
   notFound,
   badRequest,
   ok,
   created,
   InternalServerError,
-} = require('../utils/errorCodes');
+} = require('../constants/errorCodes');
 
 // tmp мидлвэра добавляет объект user в запросы. req.user._id
 
@@ -59,7 +59,7 @@ function updateUser(req, res) {
         return res.status(notFound).send({ message: 'Пользователь с указанным _id не найден' });
       }
       return res.status(ok)
-        .send({ name: dataFromDB.name, about: dataFromDB.about, avatar: dataFromDB.avatar });
+        .send({ name: dataFromDB.name, about: dataFromDB.about });
     })
     .catch((err) => {
       if (err.name === 'CastError' || err.name === 'ValidationError') {
