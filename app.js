@@ -1,6 +1,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const process = require('process');
+const helmet = require('helmet');
 const appRouter = require('./routes/index');
 
 process.on('uncaughtException', (err, origin) => {
@@ -17,6 +18,7 @@ mongoose
 
 const app = express();
 
+app.use(helmet());
 app.use(express.json());
 
 // =========== временная middleware ===============
