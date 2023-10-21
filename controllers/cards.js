@@ -7,7 +7,7 @@ const {
   InternalServerError,
 } = require('../constants/errorCodes');
 
-// tmp мидлвэра добавляет объект user в запросы. req.user._id
+// tmp middleware добавляет объект user в запросы. req.user._id
 
 function getAllCards(req, res) {
   Card.find()
@@ -37,17 +37,13 @@ function likeCard(req, res) {
     { $addToSet: { likes: req.user._id } },
     { new: true },
   )
-    .then((dataFromDB) => {
-      if (!dataFromDB) {
+    .orFail(new Error('Not found'))
+    .then((dataFromDB) => res.status(ok).send({ name: dataFromDB.name, about: dataFromDB.about }))
+
+    .catch((err) => {
+      if (err.message === 'Not found') {
         return res.status(notFound).send({ message: 'Передан несуществующий _id карточки' });
       }
-      return res.status(ok)
-        .send({
-          name: dataFromDB.name,
-          about: dataFromDB.about,
-        });
-    })
-    .catch((err) => {
       if (err.name === 'CastError' || err.name === 'ValidationError') {
         return res.status(badRequest).send({ message: 'Переданы некорректные данные для постановки/снятии лайка' });
       }
@@ -61,16 +57,14 @@ function dislikeCard(req, res) {
     { $pull: { likes: req.user._id } },
     { new: true },
   )
-    .then((dataFromDB) => {
-      if (!dataFromDB) {
-        return res.status(notFound).send({ message: 'Передан несуществующий _id карточки' });
-      }
-      return res.status(ok)
-        .send({ name: dataFromDB.name, about: dataFromDB.about });
-    })
+    .orFail(new Error('Not found'))
+    .then((dataFromDB) => res.status(ok).send({ name: dataFromDB.name, about: dataFromDB.about }))
     .catch((err) => {
       if (err.name === 'CastError' || err.name === 'ValidationError') {
         return res.status(badRequest).send({ message: 'Переданы некорректные данные для постановки/снятии лайка' });
+      }
+      if (err.message === 'Not found') {
+        return res.status(notFound).send({ message: 'Передан несуществующий _id карточки' });
       }
       return res.status(InternalServerError).send({ message: 'Ошибка по умолчанию' });
     });
@@ -78,15 +72,14 @@ function dislikeCard(req, res) {
 
 function deleteCard(req, res) {
   Card.findByIdAndDelete(req.params.cardId)
-    .then((dataFromDB) => {
-      if (!dataFromDB) {
-        return res.status(notFound).send({ message: 'Карточка с указанным _id не найдена' });
-      }
-      return res.status(ok).send({ _id: dataFromDB._id });
-    })
+    .orFail(new Error('Not found'))
+    .then((dataFromDB) => res.status(ok).send({ _id: dataFromDB._id }))
     .catch((err) => {
       if (err.name === 'CastError' || err.name === 'ValidationError') {
         return res.status(badRequest).send({ message: 'Переданы некорректные данные' });
+      }
+      if (err.message === 'Not found') {
+        return res.status(notFound).send({ message: 'Карточка с указанным _id не найдена' });
       }
       return res.status(InternalServerError).send({ message: 'Ошибка по умолчанию' });
     });

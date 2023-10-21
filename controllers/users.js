@@ -7,7 +7,7 @@ const {
   InternalServerError,
 } = require('../constants/errorCodes');
 
-// tmp мидлвэра добавляет объект user в запросы. req.user._id
+// tmp middleware добавляет объект user в запросы. req.user._id
 
 const opts = { runValidators: true, new: true };
 // const opts = { new: true, runValidators: true };
@@ -20,16 +20,15 @@ function getAllUsers(req, res) {
 
 function getUserById(req, res) {
   return User.findById(req.params.userId)
-    .then((dataFromDB) => {
-      if (!dataFromDB) {
-        return res.status(notFound).send({ message: 'Пользователь по указанному _id не найден' });
-      }
-      return res.status(ok)
-        .send({ name: dataFromDB.name, about: dataFromDB.about, avatar: dataFromDB.avatar });
-    })
+    .orFail(new Error('Not found'))
+    .then((dataFromDB) => res.status(ok)
+      .send({ name: dataFromDB.name, about: dataFromDB.about, avatar: dataFromDB.avatar }))
     .catch((err) => {
       if (err.name === 'CastError') {
         return res.status(badRequest).send({ message: 'Получение пользователя с некорректным id' });
+      }
+      if (err.message === 'Not found') {
+        return res.status(notFound).send({ message: 'Пользователь по указанному _id не найден' });
       }
       return res.status(InternalServerError).send({ message: 'Ошибка по умолчанию' });
     });
@@ -37,13 +36,12 @@ function getUserById(req, res) {
 
 function createUser(req, res) {
   return User.create(req.body)
-    .then((dataFromDB) => res.status(created)
-      .send({
-        name: dataFromDB.name,
-        about: dataFromDB.about,
-        avatar: dataFromDB.avatar,
-        _id: dataFromDB._id,
-      }))
+    .then((dataFromDB) => res.status(created).send({
+      name: dataFromDB.name,
+      about: dataFromDB.about,
+      avatar: dataFromDB.avatar,
+      _id: dataFromDB._id,
+    }))
     .catch((err) => {
       if (err.name === 'CastError' || err.name === 'ValidationError') {
         return res.status(badRequest).send({ message: 'Переданы некорректные данные при создании пользователя' });
@@ -54,16 +52,14 @@ function createUser(req, res) {
 
 function updateUser(req, res) {
   return User.findByIdAndUpdate(req.user._id, req.body, opts)
-    .then((dataFromDB) => {
-      if (!dataFromDB) {
-        console.log('Кажись от базы пришел ноль');
-        return res.status(notFound).send({ message: 'Пользователь с указанным _id не найден' });
-      }
-      return res.status(ok).send({ name: dataFromDB.name, about: dataFromDB.about });
-    })
+    .orFail(new Error('Not found'))
+    .then((dataFromDB) => res.status(ok).send({ name: dataFromDB.name, about: dataFromDB.about }))
     .catch((err) => {
       if (err.name === 'CastError' || err.name === 'ValidationError') {
         return res.status(badRequest).send({ message: 'Переданы некорректные данные при обновлении профиля' });
+      }
+      if (err.message === 'Not found') {
+        return res.status(notFound).send({ message: 'Пользователь с указанным _id не найден' });
       }
       return res.status(InternalServerError).send({ message: 'Ошибка по умолчанию' });
     });
@@ -73,15 +69,14 @@ function updateAvatar(req, res) {
   const id = req.user._id;
   const updateObject = req.body;
   return User.findByIdAndUpdate(id, updateObject, opts)
-    .then((dataFromDB) => {
-      if (!dataFromDB) {
-        return res.status(notFound).send({ message: 'Пользователь с указанным _id не найден' });
-      }
-      return res.status(ok).send({ avatar: dataFromDB.avatar });
-    })
+    .orFail(new Error('Not found'))
+    .then((dataFromDB) => res.status(ok).send({ avatar: dataFromDB.avatar }))
     .catch((err) => {
       if (err.name === 'CastError' || err.name === 'ValidationError') {
         return res.status(badRequest).send({ message: 'Переданы некорректные данные при обновлении аватара' });
+      }
+      if (err.message === 'Not found') {
+        return res.status(notFound).send({ message: 'Пользователь с указанным _id не найден' });
       }
       return res.status(InternalServerError).send({ message: 'Ошибка по умолчанию' });
     });
