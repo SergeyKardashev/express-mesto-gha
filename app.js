@@ -31,10 +31,10 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(appRouter);
-
 // =========== подключаю статику ===============
 app.use(express.static('public'));
+
+app.use(appRouter);
 
 app.listen(PORT, () => {
   // console.log('mongoose version', mongoose.version);
