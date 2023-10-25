@@ -1,3 +1,5 @@
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 const User = require('../models/user');
 const {
   notFound,
@@ -7,10 +9,38 @@ const {
   InternalServerError,
 } = require('../constants/errorCodes');
 
+const saltRounds = 10;
+
+const { JWT_SECRET = 'Secret' } = process.env;
+
 // tmp middleware добавляет объект user в запросы. req.user._id
 
 const opts = { runValidators: true, new: true };
 // const opts = { new: true, runValidators: true };
+
+function login(req, res) {
+  const { email, password } = req.body;
+
+  if (!email || !password) return res.status(400).send({ message: 'Не заполнен email или пароль' });
+
+  return User.findOne({ email })
+    .orFail(new Error('Not found'))
+
+    .then((userData) => bcrypt.compare(password, userData.password)
+      .then((matched) => {
+        if (!matched) return Promise.reject(new Error('WRONG PASS'));
+        const token = jwt.sign({ _id: userData._id }, JWT_SECRET, { expiresIn: '7d' });
+        console.log('very wrong');
+        return res.status(200).cookie('jwt', token, { httpOnly: true }).send('token in cookie').end();
+      }))
+    .catch((err) => {
+      if (err.message === 'Not found') return res.status(notFound).send({ message: 'Косяк Not found email' });
+      if (err.message === 'WRONG PASS') return res.status(notFound).send({ message: 'Косяк Pass not match' });
+      return res.status(InternalServerError).send({ message: 'Ошибка по умолчанию' });
+    });
+}
+
+// const token = req.cookies.jwt;
 
 function getAllUsers(req, res) {
   return User.find()
@@ -35,8 +65,21 @@ function getUserById(req, res) {
 }
 
 function createUser(req, res) {
-  return User.create(req.body)
+  const {
+    email, password, name, about, avatar,
+  } = req.body;
+
+  bcrypt.hash(password, saltRounds)
+    .then((hash) => User.create({
+      email,
+      password: hash,
+      name,
+      about,
+      avatar,
+    }))
     .then((dataFromDB) => res.status(created).send({
+      email: dataFromDB.email,
+      password: dataFromDB.password,
       name: dataFromDB.name,
       about: dataFromDB.about,
       avatar: dataFromDB.avatar,
@@ -49,6 +92,23 @@ function createUser(req, res) {
       return res.status(InternalServerError).send({ message: 'Ошибка по умолчанию' });
     });
 }
+
+// function createUser(req, res) {
+//   return User.create(req.body)
+//     .then((dataFromDB) => res.status(created).send({
+//       name: dataFromDB.name,
+//       about: dataFromDB.about,
+//       avatar: dataFromDB.avatar,
+//       _id: dataFromDB._id,
+//     }))
+//     .catch((err) => {
+//       if (err.name === 'CastError' || err.name === 'ValidationError') {
+//         return res.status(badRequest)
+//            .send({ message: 'Переданы некорректные данные при создании пользователя' });
+//       }
+//       return res.status(InternalServerError).send({ message: 'Ошибка по умолчанию' });
+//     });
+// }
 
 function updateUser(req, res) {
   return User.findByIdAndUpdate(req.user._id, req.body, opts)
@@ -88,4 +148,5 @@ module.exports = {
   getAllUsers,
   updateUser,
   updateAvatar,
+  login,
 };

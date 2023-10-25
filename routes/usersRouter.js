@@ -1,6 +1,6 @@
 const usersRouter = require('express').Router();
 const {
-  createUser,
+  // createUser,
   getUserById,
   getAllUsers,
   updateUser,
@@ -9,7 +9,9 @@ const {
 
 // в appRouter прописал что роуты, начинающиеся с /users обрабатываются этим usersRouter
 
-usersRouter.post('/', createUser);
+// Из файла routes/users.js удалите обработчик создания пользователя — он больше не нужен.
+// usersRouter.post('/', createUser);
+
 usersRouter.patch('/me/avatar', updateAvatar);
 usersRouter.patch('/me', updateUser);
 usersRouter.get('/:userId', getUserById);
