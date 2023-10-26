@@ -4,6 +4,7 @@ const process = require('process');
 const helmet = require('helmet');
 const appRouter = require('./routes/index');
 const { login, createUser } = require('./controllers/users');
+const auth = require('./middlewares/auth');
 
 process.on('uncaughtException', (err, origin) => {
   // eslint-disable-next-line no-console
@@ -38,6 +39,7 @@ app.use(express.static('public'));
 app.post('/signin', login);
 app.post('/signup', createUser);
 
+app.use(auth);
 app.use(appRouter);
 
 app.listen(PORT, () => {

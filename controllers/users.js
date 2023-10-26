@@ -7,6 +7,7 @@ const {
   ok,
   created,
   InternalServerError,
+  Unauthorized,
 } = require('../constants/errorCodes');
 
 const saltRounds = 10;
@@ -30,22 +31,35 @@ function login(req, res) {
       .then((matched) => {
         if (!matched) return Promise.reject(new Error('WRONG PASS'));
         const token = jwt.sign({ _id: userData._id }, JWT_SECRET, { expiresIn: '7d' });
-        console.log('very wrong');
         return res.status(200).cookie('jwt', token, { httpOnly: true }).send('token in cookie').end();
       }))
     .catch((err) => {
-      if (err.message === 'Not found') return res.status(notFound).send({ message: 'Косяк Not found email' });
-      if (err.message === 'WRONG PASS') return res.status(notFound).send({ message: 'Косяк Pass not match' });
+      if (err.message === 'Not found' || err.message === 'WRONG PASS') return res.status(Unauthorized).send({ message: 'Неправильные почта или пароль' });
       return res.status(InternalServerError).send({ message: 'Ошибка по умолчанию' });
     });
 }
-
-// const token = req.cookies.jwt;
 
 function getAllUsers(req, res) {
   return User.find()
     .then((data) => res.status(ok).send(data))
     .catch(() => res.status(InternalServerError).send({ message: 'Ошибка по умолчанию' }));
+}
+
+// 🟡 новая
+function getCurrentUserById(req, res) {
+  return User.findById(req.user) // 🟡 пока это единственная измененная строка
+    .orFail(new Error('Not found'))
+    .then((dataFromDB) => res.status(ok)
+      .send({ name: dataFromDB.name, about: dataFromDB.about, avatar: dataFromDB.avatar }))
+    .catch((err) => {
+      if (err.name === 'CastError') {
+        return res.status(badRequest).send({ message: 'Получение пользователя с некорректным id' });
+      }
+      if (err.message === 'Not found') {
+        return res.status(notFound).send({ message: 'Пользователь по указанному _id не найден' });
+      }
+      return res.status(InternalServerError).send({ message: 'Ошибка по умолчанию' });
+    });
 }
 
 function getUserById(req, res) {
@@ -149,4 +163,5 @@ module.exports = {
   updateUser,
   updateAvatar,
   login,
+  getCurrentUserById,
 };

@@ -5,6 +5,7 @@ const {
   getAllUsers,
   updateUser,
   updateAvatar,
+  getCurrentUserById,
 } = require('../controllers/users');
 
 // в appRouter прописал что роуты, начинающиеся с /users обрабатываются этим usersRouter
@@ -15,6 +16,7 @@ const {
 usersRouter.patch('/me/avatar', updateAvatar);
 usersRouter.patch('/me', updateUser);
 usersRouter.get('/:userId', getUserById);
+usersRouter.get('/me', getCurrentUserById);
 usersRouter.get('/', getAllUsers);
 
 module.exports = usersRouter;
