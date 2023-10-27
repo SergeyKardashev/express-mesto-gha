@@ -6,9 +6,11 @@ const {
   dislikeCard,
   deleteCard,
 } = require('../controllers/cards');
+// const auth = require('../middlewares/auth');
+
+// cardsRouter.use(auth);
 
 // в appRouter прописал что роуты, начинающиеся с /users обрабатываются этим usersRouter
-
 cardsRouter.post('/', createCard);
 cardsRouter.get('/', getAllCards);
 cardsRouter.put('/:cardId/likes', likeCard);

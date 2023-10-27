@@ -12,12 +12,14 @@ const { notFound } = require('../constants/errorCodes');
 //   };
 //   next();
 // });
+
 function wrongUrl(req, res) {
   return res.status(notFound).send({ message: 'Wrong URL' });
 }
 
 appRouter.use('/users', usersRouter);
 appRouter.use('/cards', cardsRouter);
+
 appRouter.use('*', wrongUrl);
 
 module.exports = appRouter;

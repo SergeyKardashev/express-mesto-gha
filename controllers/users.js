@@ -25,6 +25,7 @@ function login(req, res) {
   if (!email || !password) return res.status(400).send({ message: 'Не заполнен email или пароль' });
 
   return User.findOne({ email })
+    .select('+password')
     .orFail(new Error('Not found'))
 
     .then((userData) => bcrypt.compare(password, userData.password)
@@ -106,23 +107,6 @@ function createUser(req, res) {
       return res.status(InternalServerError).send({ message: 'Ошибка по умолчанию' });
     });
 }
-
-// function createUser(req, res) {
-//   return User.create(req.body)
-//     .then((dataFromDB) => res.status(created).send({
-//       name: dataFromDB.name,
-//       about: dataFromDB.about,
-//       avatar: dataFromDB.avatar,
-//       _id: dataFromDB._id,
-//     }))
-//     .catch((err) => {
-//       if (err.name === 'CastError' || err.name === 'ValidationError') {
-//         return res.status(badRequest)
-//            .send({ message: 'Переданы некорректные данные при создании пользователя' });
-//       }
-//       return res.status(InternalServerError).send({ message: 'Ошибка по умолчанию' });
-//     });
-// }
 
 function updateUser(req, res) {
   return User.findByIdAndUpdate(req.user._id, req.body, opts)

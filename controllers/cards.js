@@ -70,20 +70,56 @@ function dislikeCard(req, res) {
     });
 }
 
+// 🟡  трай энд кэтч добавил
+async function findCardById(cardId) {
+  try {
+    console.log('В ПОИСКОВИК ПРИШЛА CARD ID) ', cardId);
+
+    const cardData = await Card.findById(cardId).orFail(new Error('Not found 1')); // 🟡 Не уверен что тут нужно orFail
+
+    console.log('ИЩЕЙКА ВЕРНЕТ CARD DATA: ', cardData);
+
+    return cardData;
+  } catch (err) {
+    // не знаю нужен ли ерр в аргументе
+
+    return new Error('Not found 2'); // 🟡 Не уверен что тут нужен catch при наличии чуть выше orFail
+  }
+}
+
 function deleteCard(req, res) {
-  Card.findByIdAndDelete(req.params.cardId)
-    .orFail(new Error('Not found'))
-    .then((dataFromDB) => res.status(ok).send({ _id: dataFromDB._id }))
+  // 🟡 Проверяю наличие айдишки в запросе, может зря - этот роут защищен мидлвэрой.
+  // console.log('В удаляшку подаю запрос с параметрами req.params: ', req.params);
+  console.log('В параметрах запроса к удаляшке есть айдишка карточки: ', req.params.cardId);
+  if (!req.user._id) return res.status(badRequest).send({ message: '🟡 ХЗ КТО УДАЛЯЕТ. В ТОКЕНЕ НЕТ ID' });
+
+  // проверяю матч айдишки из запроса и айдишки из инфы о владельце карточки
+
+  return findCardById(req.params.cardId)
+    .then((foundCardData) => {
+      console.log('ИЗ ИЩЕЙКИ В ОБРАБОТЧИК ПРИШЛА КАРТОЧКА С ВЛАДЕЛЬЦЕМ', foundCardData.owner);
+
+      // проверяю матч айдишки из запроса и айдишки из инфы о владельце карточки
+      // 🟡 КОД ОШИБКИ НЕ ТОТ
+      if (!foundCardData.owner.equals(req.user._id)) return res.status(500).send({ message: '🟡 СРАВНИЛ НЕЕЕЕ УСПЕШНО' });
+
+      console.log('ПОСЛЕ ВСЕХ ПРОВЕРОК БУДЕТ ЗАПУЩЕН КОД УДАЛЕНИЯ КАРТОЧКИ');
+
+      return Card.findByIdAndDelete(req.params.cardId)
+        .orFail(new Error('Not found'))
+        .then((dataFromDB) => res.status(ok).send({ _id: dataFromDB._id }));
+    })
     .catch((err) => {
-      if (err.name === 'CastError' || err.name === 'ValidationError') {
-        return res.status(badRequest).send({ message: 'Переданы некорректные данные' });
-      }
-      if (err.message === 'Not found') {
-        return res.status(notFound).send({ message: 'Карточка с указанным _id не найдена' });
-      }
+      console.log('СРАБОТАЛ catch УДАЛЕНИЯ КАРТОЧКИ');
+
+      if (err.name === 'CastError' || err.name === 'ValidationError') res.status(badRequest).send({ message: 'Переданы некорректные данные' });
+      if (err.message === 'Not found') res.status(notFound).send({ message: 'Карточка с указанным _id не найдена' });
+
+      console.log('НЕ СРАБОТАЛИ КАСТ ЭРРОР, ВАЛИДЕЙШН, НОТФАУНТ. КИДАЮ ДЕФОЛТ');
       return res.status(InternalServerError).send({ message: 'Ошибка по умолчанию' });
     });
 }
+
 module.exports = {
   createCard,
   getAllCards,
