@@ -1,23 +1,27 @@
 const Card = require('../models/card');
+
 const {
-  notFound,
-  badRequest,
-  ok,
-  created,
-  InternalServerError,
-} = require('../constants/errorCodes');
+  STATUS_OK,
+  STATUS_CREATED,
+  STATUS_BAD_REQUEST,
+  // STATUS_UNAUTHORIZED,
+  // STATUS_FORBIDDEN,
+  STATUS_NOT_FOUND,
+  // STATUS_CONFLICT,
+  STATUS_INTERNAL_SERVER_ERROR,
+} = require('../constants/http-status');
 
 // tmp middleware добавляет объект user в запросы. req.user._id
 
 function getAllCards(req, res) {
   Card.find()
-    .then((dataFromDB) => res.status(ok).send(dataFromDB))
-    .catch(() => res.status(InternalServerError).send({ message: 'Ошибка по умолчанию' }));
+    .then((dataFromDB) => res.status(STATUS_OK).send(dataFromDB))
+    .catch(() => res.status(STATUS_INTERNAL_SERVER_ERROR).send({ message: 'Ошибка по умолчанию' }));
 }
 
 function createCard(req, res) {
   return Card.create({ name: req.body.name, link: req.body.link, owner: req.user._id })
-    .then((dataFromDB) => res.status(created)
+    .then((dataFromDB) => res.status(STATUS_CREATED)
       .send({
         name: dataFromDB.name,
         link: dataFromDB.link,
@@ -25,9 +29,9 @@ function createCard(req, res) {
       }))
     .catch((err) => {
       if (err.name === 'CastError' || err.name === 'ValidationError') {
-        return res.status(badRequest).send({ message: 'Переданы некорректные данные при создании карточки' });
+        return res.status(STATUS_BAD_REQUEST).send({ message: 'Переданы некорректные данные при создании карточки' });
       }
-      return res.status(InternalServerError).send({ message: 'Ошибка по умолчанию' });
+      return res.status(STATUS_INTERNAL_SERVER_ERROR).send({ message: 'Ошибка по умолчанию' });
     });
 }
 
@@ -38,16 +42,17 @@ function likeCard(req, res) {
     { new: true },
   )
     .orFail(new Error('Not found'))
-    .then((dataFromDB) => res.status(ok).send({ name: dataFromDB.name, about: dataFromDB.about }))
+    .then((dataFromDB) => res.status(STATUS_OK)
+      .send({ name: dataFromDB.name, about: dataFromDB.about }))
 
     .catch((err) => {
       if (err.message === 'Not found') {
-        return res.status(notFound).send({ message: 'Передан несуществующий _id карточки' });
+        return res.status(STATUS_NOT_FOUND).send({ message: 'Передан несуществующий _id карточки' });
       }
       if (err.name === 'CastError' || err.name === 'ValidationError') {
-        return res.status(badRequest).send({ message: 'Переданы некорректные данные для постановки/снятии лайка' });
+        return res.status(STATUS_BAD_REQUEST).send({ message: 'Переданы некорректные данные для постановки/снятии лайка' });
       }
-      return res.status(InternalServerError).send({ message: 'Ошибка по умолчанию' });
+      return res.status(STATUS_INTERNAL_SERVER_ERROR).send({ message: 'Ошибка по умолчанию' });
     });
 }
 
@@ -58,15 +63,17 @@ function dislikeCard(req, res) {
     { new: true },
   )
     .orFail(new Error('Not found'))
-    .then((dataFromDB) => res.status(ok).send({ name: dataFromDB.name, about: dataFromDB.about }))
+    .then((dataFromDB) => res
+      .status(STATUS_OK)
+      .send({ name: dataFromDB.name, about: dataFromDB.about }))
     .catch((err) => {
       if (err.name === 'CastError' || err.name === 'ValidationError') {
-        return res.status(badRequest).send({ message: 'Переданы некорректные данные для постановки/снятии лайка' });
+        return res.status(STATUS_BAD_REQUEST).send({ message: 'Переданы некорректные данные для постановки/снятии лайка' });
       }
       if (err.message === 'Not found') {
-        return res.status(notFound).send({ message: 'Передан несуществующий _id карточки' });
+        return res.status(STATUS_NOT_FOUND).send({ message: 'Передан несуществующий _id карточки' });
       }
-      return res.status(InternalServerError).send({ message: 'Ошибка по умолчанию' });
+      return res.status(STATUS_INTERNAL_SERVER_ERROR).send({ message: 'Ошибка по умолчанию' });
     });
 }
 
@@ -91,7 +98,7 @@ function deleteCard(req, res) {
   // 🟡 Проверяю наличие айдишки в запросе, может зря - этот роут защищен мидлвэрой.
   // console.log('В удаляшку подаю запрос с параметрами req.params: ', req.params);
   console.log('В параметрах запроса к удаляшке есть айдишка карточки: ', req.params.cardId);
-  if (!req.user._id) return res.status(badRequest).send({ message: '🟡 ХЗ КТО УДАЛЯЕТ. В ТОКЕНЕ НЕТ ID' });
+  if (!req.user._id) return res.status(STATUS_BAD_REQUEST).send({ message: '🟡 ХЗ КТО УДАЛЯЕТ. В ТОКЕНЕ НЕТ ID' });
 
   // проверяю матч айдишки из запроса и айдишки из инфы о владельце карточки
 
@@ -99,24 +106,23 @@ function deleteCard(req, res) {
     .then((foundCardData) => {
       console.log('ИЗ ИЩЕЙКИ В ОБРАБОТЧИК ПРИШЛА КАРТОЧКА С ВЛАДЕЛЬЦЕМ', foundCardData.owner);
 
-      // проверяю матч айдишки из запроса и айдишки из инфы о владельце карточки
-      // 🟡 КОД ОШИБКИ НЕ ТОТ
-      if (!foundCardData.owner.equals(req.user._id)) return res.status(500).send({ message: '🟡 СРАВНИЛ НЕЕЕЕ УСПЕШНО' });
+      // проверяю матч айдишки из запроса и айдишки из инфы о владельце карточки 🔴 КОД ОШИБКИ НЕ ТОТ
+      if (!foundCardData.owner.equals(req.user._id)) return res.status(500).send({ message: '🔴 СРАВНИЛ НЕЕЕЕ УСПЕШНО' });
 
       console.log('ПОСЛЕ ВСЕХ ПРОВЕРОК БУДЕТ ЗАПУЩЕН КОД УДАЛЕНИЯ КАРТОЧКИ');
 
       return Card.findByIdAndDelete(req.params.cardId)
         .orFail(new Error('Not found'))
-        .then((dataFromDB) => res.status(ok).send({ _id: dataFromDB._id }));
+        .then((dataFromDB) => res.status(STATUS_OK).send({ _id: dataFromDB._id }));
     })
     .catch((err) => {
       console.log('СРАБОТАЛ catch УДАЛЕНИЯ КАРТОЧКИ');
 
-      if (err.name === 'CastError' || err.name === 'ValidationError') res.status(badRequest).send({ message: 'Переданы некорректные данные' });
-      if (err.message === 'Not found') res.status(notFound).send({ message: 'Карточка с указанным _id не найдена' });
+      if (err.name === 'CastError' || err.name === 'ValidationError') res.status(STATUS_BAD_REQUEST).send({ message: 'Переданы некорректные данные' });
+      if (err.message === 'Not found') res.status(STATUS_NOT_FOUND).send({ message: 'Карточка с указанным _id не найдена' });
 
       console.log('НЕ СРАБОТАЛИ КАСТ ЭРРОР, ВАЛИДЕЙШН, НОТФАУНТ. КИДАЮ ДЕФОЛТ');
-      return res.status(InternalServerError).send({ message: 'Ошибка по умолчанию' });
+      return res.status(STATUS_INTERNAL_SERVER_ERROR).send({ message: 'Ошибка по умолчанию' });
     });
 }
 

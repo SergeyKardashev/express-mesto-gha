@@ -5,6 +5,7 @@ const helmet = require('helmet');
 const appRouter = require('./routes/index');
 const { login, createUser } = require('./controllers/users');
 const auth = require('./middlewares/auth');
+const errorHandler = require('./middlewares/error-handler');
 
 process.on('uncaughtException', (err, origin) => {
   // eslint-disable-next-line no-console
@@ -41,6 +42,10 @@ app.post('/signup', createUser);
 
 app.use(auth);
 app.use(appRouter);
+
+app.use(errorHandler);
+// кажется, централизованный обработчик ошибок нужно подключать строго после appRoueter и auth.
+// Так ошибки, выбрасываемые в некст попадут в централизованный обработчик
 
 app.listen(PORT, () => {
   // console.log('mongoose version', mongoose.version);
