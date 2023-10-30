@@ -1,7 +1,12 @@
 const appRouter = require('express').Router();
+// const path = require('path');
 const usersRouter = require('./usersRouter');
 const cardsRouter = require('./cardsRouter');
-const { notFound } = require('../constants/errorCodes');
+// const { notFound } = require('../constants/errorCodes');
+
+// const __dirname = path.resolve();
+// const PUBLIC_FOLDER = path.join(__dirname, 'public');
+// const INDEX_FILE = path.join(PUBLIC_FOLDER, 'index.html');
 
 // =========== временная мидлвара ===============
 // хотел унести из точки входа, но автотесты ругаются.
@@ -13,13 +18,14 @@ const { notFound } = require('../constants/errorCodes');
 //   next();
 // });
 
-function wrongUrl(req, res) {
-  return res.status(notFound).send({ message: 'Wrong URL' });
-}
-
 appRouter.use('/users', usersRouter);
 appRouter.use('/cards', cardsRouter);
 
-appRouter.use('*', wrongUrl);
+// function wrongUrl(req, res) {
+//   return res.status(notFound).send({ message: 'Wrong URL' });
+// }
+// appRouter.use('*', wrongUrl);
+
+// appRouter.use('*', (req, res) => res.sendFile(INDEX_FILE));
 
 module.exports = appRouter;

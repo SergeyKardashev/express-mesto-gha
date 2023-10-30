@@ -2,10 +2,12 @@ const express = require('express');
 const mongoose = require('mongoose');
 const process = require('process');
 const helmet = require('helmet');
+const cookieParser = require('cookie-parser');
 const appRouter = require('./routes/index');
 const { login, createUser } = require('./controllers/users');
 const auth = require('./middlewares/auth');
 const errorHandler = require('./middlewares/error-handler');
+const ConflictError = require('./errors/conflict-error');
 
 process.on('uncaughtException', (err, origin) => {
   // eslint-disable-next-line no-console
@@ -23,6 +25,7 @@ const app = express();
 
 app.use(helmet());
 app.use(express.json());
+app.use(cookieParser());
 
 // =========== временная middleware ===============
 // app.use((req, res, next) => {
@@ -43,8 +46,15 @@ app.post('/signup', createUser);
 app.use(auth);
 app.use(appRouter);
 
+// Маршрут для генерации ошибки
+app.get('/error', (req, res, next) => {
+  // const myError = new Error('====== Пример ошибки ========');
+  const myError = new ConflictError('====== Пример ошибки с конфликтом ========');
+  next(myError); // Вызов ошибки и передача ее в middleware
+});
+
 app.use(errorHandler);
-// кажется, централизованный обработчик ошибок нужно подключать строго после appRoueter и auth.
+// Централизованный обработчик ошибок подключать после appRoueter и auth?
 // Так ошибки, выбрасываемые в некст попадут в централизованный обработчик
 
 app.listen(PORT, () => {
