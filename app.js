@@ -3,6 +3,12 @@ const mongoose = require('mongoose');
 const process = require('process');
 const helmet = require('helmet');
 const cookieParser = require('cookie-parser');
+const {
+  celebrate,
+  Joi,
+  errors,
+  Segments,
+} = require('celebrate');
 const appRouter = require('./routes/index');
 const { login, createUser } = require('./controllers/users');
 const auth = require('./middlewares/auth');
@@ -37,21 +43,46 @@ app.use(cookieParser());
 //   next();
 // });
 
+// [Segments.HEADERS]: Joi.object().keys(),
+
+// [Segments.BODY]: Joi.object().keys({
+//   name: Joi.string().alphanum().min(2).max(30).required(),
+//   email: Joi.string().required().email(),
+//   password: Joi.string().pattern(/^[a-zA-Z0-9]{3,30}$/).required().min(8),
+//   repeat_password: Joi.ref('password'),
+//   age: Joi.number().integer().required().min(18),
+//   about: Joi.string().min(2).max(30),
+// }),
+
+// [Segments.HEADERS]: Joi.object({
+//   token: Joi.string().required().regex(/abc\d{3}/),
+// }).unknown(),
+
 // =========== подключаю статику ===============
 app.use(express.static('public'));
 
 app.post('/signin', login);
 app.post('/signup', createUser);
 
+// проверка себебрейтом на наличие токена в виде строки
+// только для роутов после логина и после создания юзера.
+// но в авторизационный роут дорога только через этот валидационный
+app.use(celebrate({
+  [Segments.COOKIES]: Joi.object({
+    jwt: Joi.string().required(),
+  }).options({ allowUnknown: true }),
+}));
+
 app.use(auth);
 app.use(appRouter);
 
 // Маршрут для генерации ошибки
 app.get('/error', (req, res, next) => {
-  // const myError = new Error('====== Пример ошибки ========');
   const myError = new ConflictError('====== Пример ошибки с конфликтом ========');
   next(myError); // Вызов ошибки и передача ее в middleware
 });
+
+app.use(errors()); // from celebrate
 
 app.use(errorHandler);
 // Централизованный обработчик ошибок подключать после appRoueter и auth?
