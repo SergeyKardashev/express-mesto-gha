@@ -60,7 +60,7 @@ async function createUser(req, res, next) {
       return next(new ConflictError('Этот email уже используется'));
     }
     if (err.name === 'CastError' || err.name === 'ValidationError') {
-      return next(new ConflictError('Переданы некорректные данные при создании пользователя'));
+      return next(new BadRequestError('Переданы некорректные данные при создании пользователя'));
     }
     return next(err);
   }
