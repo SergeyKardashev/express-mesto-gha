@@ -51,7 +51,16 @@ async function createUser(req, res, next) {
       about,
       avatar,
     });
-    return res.status(STATUS_CREATED).send(user);
+    // return res.status(STATUS_CREATED).send(user);
+    // Пароль не нужно возвращать. Хоть и захэшированный.
+    // Какие поля нужно возвращать - не знаю.
+    return res.status(STATUS_CREATED).send({
+      _id: user._id,
+      email: user.email,
+      name: user.name,
+      about: user.about,
+      avatar: user.avatar,
+    });
   } catch (err) {
     // console.log(err);
     console.log('⚪️ В кетче имя ', err.name, ' и СтатусКод ', err.statusCode, 'код (нестатус) ', err.code, 'текст ', err.message);

@@ -11,7 +11,6 @@
     },
     "rules": {
       "no-underscore-dangle": ["error", { "allow": ["_id", "__dirname"] }],
-      // "ignoreChainWithDepth": 2 так не правильно. Это не правило, а часть конфигурации правила
-      "newline-per-chained-call": ["error", { "ignoreChainWithDepth": 3 }]
+      "newline-per-chained-call": ["error", { "ignoreChainWithDepth": 5 }]
     }
 }

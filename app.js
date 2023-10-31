@@ -61,8 +61,30 @@ app.use(cookieParser());
 // =========== подключаю статику ===============
 app.use(express.static('public'));
 
-app.post('/signin', login);
-app.post('/signup', createUser);
+// Логин
+app.post(
+  '/signin',
+  celebrate({
+    [Segments.BODY]: Joi.object().keys({
+      email: Joi.string().required().email(),
+      password: Joi.string().required(),
+    }),
+  }),
+  login,
+);
+
+// регистрация register
+app.post(
+  '/signup',
+  celebrate({
+    [Segments.BODY]: Joi.object().keys({
+      email: Joi.string().required().email(),
+      password: Joi.string().required(),
+      repeat_password: Joi.ref('password'),
+    }),
+  }),
+  createUser,
+);
 
 // проверка себебрейтом на наличие токена в виде строки
 // только для роутов после логина и после создания юзера.
