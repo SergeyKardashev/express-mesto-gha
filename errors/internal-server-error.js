@@ -1,7 +1,9 @@
+const { STATUS_INTERNAL_SERVER_ERROR } = require('../constants/http-status');
+
 class InternalServerError extends Error {
   constructor(message) {
     super(message);
-    this.statusCode = 500;
+    this.statusCode = STATUS_INTERNAL_SERVER_ERROR;
   }
 }
 

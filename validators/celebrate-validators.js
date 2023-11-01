@@ -1,11 +1,26 @@
-const {
-  celebrate,
-  Joi,
-  // errors, // оставил в роутере
-  // Segments, // не использую больше 1 сегмента
-} = require('celebrate');
-
+const { celebrate, Joi } = require('celebrate');
 const urlRegExp = require('../constants/reg-exp-url');
+
+module.exports.validateToken = celebrate({
+  cookies: Joi.object({
+    jwt: Joi.string().required(),
+  }).options({ allowUnknown: true }),
+});
+
+module.exports.validateCreateUser = celebrate({
+  body: Joi.object().keys({
+    email: Joi.string().required().email(),
+    password: Joi.string().required(),
+    repeat_password: Joi.ref('password'),
+  }),
+});
+
+module.exports.validateLogin = celebrate({
+  body: Joi.object().keys({
+    email: Joi.string().required().email(),
+    password: Joi.string().required(),
+  }),
+});
 
 module.exports.validateUpdateAvatar = celebrate({
   body: Joi.object().keys({
@@ -50,18 +65,3 @@ module.exports.validateDeleteCard = celebrate({
     cardId: Joi.string().alphanum().length(24),
   }),
 });
-
-// решил для каждой функции делать свой валидатор
-// module.exports.idValidator = celebrate({
-//   params: Joi.object().keys({
-//     cardId: Joi.string().alphanum().length(24),
-//   }),
-// });
-
-// module.exports = {
-//   validateUpdateAvatar,
-//   validateCreateCard,
-//   validateLikeCard,
-//   validateDislikeCard,
-//   validateDeleteCard,
-// };
