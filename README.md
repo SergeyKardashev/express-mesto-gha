@@ -25,6 +25,7 @@
 - Backend на Node.js
 - Express.js
 - MongoDB, Mongoose, Compass
+- bcrypt, celebrate, joi, jsonwebtoken, validate
 - Postman
 - iron butt
 

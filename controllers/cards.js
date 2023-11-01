@@ -7,19 +7,20 @@ const {
   // STATUS_UNAUTHORIZED,
   // STATUS_FORBIDDEN,
   STATUS_NOT_FOUND,
+  // STATUS_INTERNAL_SERVER_ERROR,
+  STATUS_FORBIDDEN,
   // STATUS_CONFLICT,
-  STATUS_INTERNAL_SERVER_ERROR,
+  // STATUS_INTERNAL_SERVER_ERROR,
 } = require('../constants/http-status');
+const NotFoundError = require('../errors/not-found-error');
 
-// tmp middleware добавляет объект user в запросы. req.user._id
-
-function getAllCards(req, res) {
-  Card.find()
+function getAllCards(req, res, next) {
+  return Card.find()
     .then((dataFromDB) => res.status(STATUS_OK).send(dataFromDB))
-    .catch(() => res.status(STATUS_INTERNAL_SERVER_ERROR).send({ message: 'Ошибка по умолчанию' }));
+    .catch(next);
 }
 
-function createCard(req, res) {
+function createCard(req, res, next) {
   return Card.create({ name: req.body.name, link: req.body.link, owner: req.user._id })
     .then((dataFromDB) => res.status(STATUS_CREATED)
       .send({
@@ -28,101 +29,80 @@ function createCard(req, res) {
         _id: dataFromDB._id,
       }))
     .catch((err) => {
-      if (err.name === 'CastError' || err.name === 'ValidationError') {
-        return res.status(STATUS_BAD_REQUEST).send({ message: 'Переданы некорректные данные при создании карточки' });
-      }
-      return res.status(STATUS_INTERNAL_SERVER_ERROR).send({ message: 'Ошибка по умолчанию' });
+      if (err.name === 'CastError' || err.name === 'ValidationError') return res.status(STATUS_BAD_REQUEST).send({ message: 'Переданы некорректные данные при создании карточки' });
+      return next(err);
     });
 }
 
-function likeCard(req, res) {
+function likeCard(req, res, next) {
   return Card.findByIdAndUpdate(
     req.params.cardId,
     { $addToSet: { likes: req.user._id } },
     { new: true },
   )
     .orFail(new Error('Not found'))
-    .then((dataFromDB) => res.status(STATUS_OK)
-      .send({ name: dataFromDB.name, about: dataFromDB.about }))
-
+    .then((dataFromDB) => res.status(STATUS_OK).send(dataFromDB))
+    // .send({ name: dataFromDB.name, about: dataFromDB.name }))
+    // у фотки поля с описанием называется name. + есть лайки, ссылка, владелец, дата
     .catch((err) => {
-      if (err.message === 'Not found') {
-        return res.status(STATUS_NOT_FOUND).send({ message: 'Передан несуществующий _id карточки' });
-      }
-      if (err.name === 'CastError' || err.name === 'ValidationError') {
-        return res.status(STATUS_BAD_REQUEST).send({ message: 'Переданы некорректные данные для постановки/снятии лайка' });
-      }
-      return res.status(STATUS_INTERNAL_SERVER_ERROR).send({ message: 'Ошибка по умолчанию' });
+      if (err.message === 'Not found') return res.status(STATUS_NOT_FOUND).send({ message: 'Передан несуществующий _id карточки' });
+      if (err.name === 'CastError' || err.name === 'ValidationError') return res.status(STATUS_BAD_REQUEST).send({ message: 'Переданы некорректные данные для постановки/снятии лайка' });
+      return next(err);
     });
 }
 
-function dislikeCard(req, res) {
+function dislikeCard(req, res, next) {
   return Card.findByIdAndUpdate(
     req.params.cardId,
     { $pull: { likes: req.user._id } },
     { new: true },
   )
     .orFail(new Error('Not found'))
-    .then((dataFromDB) => res
-      .status(STATUS_OK)
-      .send({ name: dataFromDB.name, about: dataFromDB.about }))
+    .then((dataFromDB) => res.status(STATUS_OK).send(dataFromDB))
+    // .send({ name: dataFromDB.name, about: dataFromDB.about }))
+    // у фотки поля с описанием называется name.
+    // и еще есть лайки, ссылка, владелец, дата
     .catch((err) => {
-      if (err.name === 'CastError' || err.name === 'ValidationError') {
-        return res.status(STATUS_BAD_REQUEST).send({ message: 'Переданы некорректные данные для постановки/снятии лайка' });
-      }
-      if (err.message === 'Not found') {
-        return res.status(STATUS_NOT_FOUND).send({ message: 'Передан несуществующий _id карточки' });
-      }
-      return res.status(STATUS_INTERNAL_SERVER_ERROR).send({ message: 'Ошибка по умолчанию' });
+      if (err.name === 'CastError' || err.name === 'ValidationError') return res.status(STATUS_BAD_REQUEST).send({ message: 'Переданы некорректные данные для постановки/снятии лайка' });
+      if (err.message === 'Not found') return res.status(STATUS_NOT_FOUND).send({ message: 'Передан несуществующий _id карточки' });
+      return next(err);
     });
 }
 
-// 🟡  трай энд кэтч добавил
 async function findCardById(cardId) {
-  try {
-    console.log('В ПОИСКОВИК ПРИШЛА CARD ID) ', cardId);
-
-    const cardData = await Card.findById(cardId).orFail(new Error('Not found 1')); // 🟡 Не уверен что тут нужно orFail
-
-    console.log('ИЩЕЙКА ВЕРНЕТ CARD DATA: ', cardData);
-
+  try { // console.log('В ПОИСКОВИК ПРИШЛА CARD ID) ', cardId);
+    const cardData = await Card.findById(cardId)
+      .orFail(new NotFoundError('Карточка с указанным _id не найдена')); // 🟡 Не уверен что тут нужно orFail
+    // console.log('ИЩЕЙКА ВЕРНЕТ CARD DATA: ', cardData);
     return cardData;
-  } catch (err) {
-    // не знаю нужен ли ерр в аргументе
-
-    return new Error('Not found 2'); // 🟡 Не уверен что тут нужен catch при наличии чуть выше orFail
+  } catch (err) { // не знаю нужен ли ерр в аргументе
+    return new NotFoundError('Карточка с указанным _id не найдена'); // 🟡 Не уверен что тут нужен catch при наличии чуть выше orFail
   }
 }
 
-function deleteCard(req, res) {
-  // 🟡 Проверяю наличие айдишки в запросе, может зря - этот роут защищен мидлвэрой.
-  // console.log('В удаляшку подаю запрос с параметрами req.params: ', req.params);
-  console.log('В параметрах запроса к удаляшке есть айдишка карточки: ', req.params.cardId);
-  if (!req.user._id) return res.status(STATUS_BAD_REQUEST).send({ message: '🟡 ХЗ КТО УДАЛЯЕТ. В ТОКЕНЕ НЕТ ID' });
-
+// console.log('В удаляшку подаю запрос с параметрами req.params: ', req.params);
+// console.log('В параметрах запроса к удаляшке есть айдишка карточки: ', req.params.cardId);
+function deleteCard(req, res, next) {
+  // Проверяю наличие user._id в запросе зря - роут защищен мидлвэрой.
+  // if (!req.user._id) return res.status(STATUS_BAD_REQUEST)
+  //  .send({ message: 'Переданы некорректные данные' }); // текст не из таблицы
   // проверяю матч айдишки из запроса и айдишки из инфы о владельце карточки
-
   return findCardById(req.params.cardId)
     .then((foundCardData) => {
-      console.log('ИЗ ИЩЕЙКИ В ОБРАБОТЧИК ПРИШЛА КАРТОЧКА С ВЛАДЕЛЬЦЕМ', foundCardData.owner);
-
-      // проверяю матч айдишки из запроса и айдишки из инфы о владельце карточки 🔴 КОД ОШИБКИ НЕ ТОТ
-      if (!foundCardData.owner.equals(req.user._id)) return res.status(500).send({ message: '🔴 СРАВНИЛ НЕЕЕЕ УСПЕШНО' });
-
-      console.log('ПОСЛЕ ВСЕХ ПРОВЕРОК БУДЕТ ЗАПУЩЕН КОД УДАЛЕНИЯ КАРТОЧКИ');
-
+      // console.log('ИЗ ИЩЕЙКИ В ОБРАБОТЧИК ПРИШЛА КАРТОЧКА С ВЛАДЕЛЬЦЕМ', foundCardData.owner);
+      // проверяю матч айдишки из запроса и айдишки из инфы о владельце карточки
+      if (!foundCardData.owner.equals(req.user._id)) return res.status(STATUS_FORBIDDEN).send({ message: 'Попытка удалить чужую карточку' });
+      // console.log('ПОСЛЕ ВСЕХ ПРОВЕРОК БУДЕТ ЗАПУЩЕН КОД УДАЛЕНИЯ КАРТОЧКИ');
       return Card.findByIdAndDelete(req.params.cardId)
-        .orFail(new Error('Not found'))
+        .orFail(new NotFoundError('Карточка с указанным _id не найдена')) // наверное лишний орфейл - есть у колбэка
         .then((dataFromDB) => res.status(STATUS_OK).send({ _id: dataFromDB._id }));
     })
     .catch((err) => {
-      console.log('СРАБОТАЛ catch УДАЛЕНИЯ КАРТОЧКИ');
-
+      // console.log('СРАБОТАЛ catch УДАЛЕНИЯ КАРТОЧКИ');
       if (err.name === 'CastError' || err.name === 'ValidationError') res.status(STATUS_BAD_REQUEST).send({ message: 'Переданы некорректные данные' });
       if (err.message === 'Not found') res.status(STATUS_NOT_FOUND).send({ message: 'Карточка с указанным _id не найдена' });
-
-      console.log('НЕ СРАБОТАЛИ КАСТ ЭРРОР, ВАЛИДЕЙШН, НОТФАУНТ. КИДАЮ ДЕФОЛТ');
-      return res.status(STATUS_INTERNAL_SERVER_ERROR).send({ message: 'Ошибка по умолчанию' });
+      // console.log('НЕ СРАБОТАЛИ КАСТ ЭРРОР, ВАЛИДЕЙШН, НОТФАУНТ. КИДАЮ ДЕФОЛТ');
+      return next(err);
     });
 }
 

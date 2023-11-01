@@ -13,7 +13,7 @@ const appRouter = require('./routes/index');
 const { login, createUser } = require('./controllers/users');
 const auth = require('./middlewares/auth');
 const errorHandler = require('./middlewares/error-handler');
-const ConflictError = require('./errors/conflict-error');
+// const ConflictError = require('./errors/conflict-error');
 
 process.on('uncaughtException', (err, origin) => {
   // eslint-disable-next-line no-console
@@ -43,6 +43,7 @@ app.use(cookieParser());
 //   next();
 // });
 
+/*
 // [Segments.HEADERS]: Joi.object().keys(),
 
 // [Segments.BODY]: Joi.object().keys({
@@ -57,9 +58,10 @@ app.use(cookieParser());
 // [Segments.HEADERS]: Joi.object({
 //   token: Joi.string().required().regex(/abc\d{3}/),
 // }).unknown(),
+*/
 
 // =========== подключаю статику ===============
-app.use(express.static('public'));
+// app.use(express.static('public'));
 
 // Логин
 app.post(
@@ -95,14 +97,14 @@ app.use(celebrate({
   }).options({ allowUnknown: true }),
 }));
 
-app.use(auth);
+app.use(auth); // в дочерних роутерах отключить
 app.use(appRouter);
 
 // Маршрут для генерации ошибки
-app.get('/error', (req, res, next) => {
-  const myError = new ConflictError('====== Пример ошибки с конфликтом ========');
-  next(myError); // Вызов ошибки и передача ее в middleware
-});
+// app.get('/error', (req, res, next) => {
+//   const myError = new ConflictError('====== Пример ошибки с конфликтом ========');
+//   next(myError); // Вызов ошибки и передача ее в middleware
+// });
 
 app.use(errors()); // from celebrate
 
