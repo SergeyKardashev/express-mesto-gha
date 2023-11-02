@@ -6,7 +6,10 @@ const cookieParser = require('cookie-parser');
 const { errors } = require('celebrate');
 // const { Joi } = require('celebrate');
 // const { celebrate } = require('celebrate');
-const { validateLogin, validateCreateUser, validateToken } = require('./validators/celebrate-validators');
+const {
+  validateLogin, validateCreateUser,
+  // validateToken
+} = require('./validators/celebrate-validators');
 const appRouter = require('./routes/index');
 const { login, createUser } = require('./controllers/users');
 const auth = require('./middlewares/auth');
@@ -37,7 +40,6 @@ app.use(cookieParser());
 app.post('/signin', validateLogin, login);
 app.post('/signup', validateCreateUser, createUser); // register
 
-app.use(validateToken);
 app.use(auth);
 app.use(appRouter);
 app.use(errors()); // celebrate error handler
