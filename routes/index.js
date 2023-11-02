@@ -17,7 +17,7 @@ const { STATUS_BAD_REQUEST } = require('../constants/http-status');
 appRouter.use('/users', usersRouter);
 appRouter.use('/cards', cardsRouter);
 
-appRouter.get('*', (req, res) => res.status(STATUS_BAD_REQUEST).send({ message: 'Запрошенной страницы не существует' }));
+appRouter.get('*', (req, res) => res.status(STATUS_BAD_REQUEST).send('Запрошенной страницы не существует'));
 
 // appRouter.use('*', (req, res) => res.sendFile(INDEX_FILE)); // из вебинара для статики
 
