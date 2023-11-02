@@ -71,7 +71,13 @@ function getUserById(req, res, next) {
   return User.findById(req.params.userId)
     .orFail(new NotFoundError('_id не найден'))
     .then((dataFromDB) => res.status(STATUS_OK)
-      .send({ name: dataFromDB.name, about: dataFromDB.about, avatar: dataFromDB.avatar }))
+      .send({
+        userId: dataFromDB._id,
+        email: dataFromDB.email,
+        name: dataFromDB.name,
+        about: dataFromDB.about,
+        avatar: dataFromDB.avatar,
+      }))
     .catch((err) => {
       if (err.statusCode === 404) return next(new NotFoundError('Пользователь по указанному _id не найден'));
       if (err.name === 'CastError') return next(new BadRequestError('Получение пользователя с некорректным id'));
@@ -83,7 +89,13 @@ function getCurrentUserById(req, res, next) {
   return User.findById(req.user)
     .orFail(new NotFoundError('_id не найден'))
     .then((dataFromDB) => res.status(STATUS_OK)
-      .send({ name: dataFromDB.name, about: dataFromDB.about, avatar: dataFromDB.avatar }))
+      .send({
+        userId: dataFromDB._id,
+        email: dataFromDB.email,
+        name: dataFromDB.name,
+        about: dataFromDB.about,
+        avatar: dataFromDB.avatar,
+      }))
     .catch((err) => {
       if (err.statusCode === STATUS_NOT_FOUND) return next(new NotFoundError('Пользователь по указанному _id не найден'));
       if (err.name === 'CastError') return next(new BadRequestError('Получение пользователя с некорректным id'));
@@ -94,7 +106,13 @@ function getCurrentUserById(req, res, next) {
 function updateUser(req, res, next) {
   return User.findByIdAndUpdate(req.user._id, req.body, opts)
     .orFail(new NotFoundError())
-    .then((user) => res.status(STATUS_OK).send({ name: user.name, about: user.about }))
+    .then((dataFromDB) => res.status(STATUS_OK).send({
+      userId: dataFromDB._id,
+      email: dataFromDB.email,
+      name: dataFromDB.name,
+      about: dataFromDB.about,
+      avatar: dataFromDB.avatar,
+    }))
     .catch((err) => {
       if (err.name === 'CastError' || err.name === 'ValidationError') return next(new BadRequestError('Переданы некорректные данные при обновлении профиля'));
       if (err.statusCode === STATUS_NOT_FOUND) return next(new NotFoundError('Пользователь с указанным _id не найден'));

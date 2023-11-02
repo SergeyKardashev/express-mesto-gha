@@ -12,6 +12,9 @@ module.exports.validateCreateUser = celebrate({
     email: Joi.string().required().email(),
     password: Joi.string().required(),
     repeat_password: Joi.ref('password'),
+    name: Joi.string().min(2).max(30), // ругались тесты
+    about: Joi.string().min(2).max(30), // ругались тесты
+    avatar: Joi.string().pattern(urlRegExp), // ругались тесты
   }),
 });
 

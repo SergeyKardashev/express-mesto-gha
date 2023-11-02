@@ -10,8 +10,8 @@ function auth(req, res, next) {
     const payload = jwt.verify(token, JWT_SECRET);
     req.user = payload;
     return next();
-  } catch (error) {
-    return next(error);
+  } catch {
+    return next(new UnauthorizedError('Необходима авторизация'));
   }
 }
 
