@@ -56,13 +56,9 @@ function dislikeCard(req, res, next) {
 }
 
 async function findCardById(cardId) {
-  try {
-    const cardData = await Card.findById(cardId)
-      .orFail(new NotFoundError('Карточка с указанным _id не найдена'));
-    return cardData;
-  } catch (err) {
-    return new NotFoundError('Карточка с указанным _id не найдена');
-  }
+  const cardData = await Card.findById(cardId)
+    .orFail(new NotFoundError('Карточка с указанным _id не найдена'));
+  return cardData;
 }
 
 function deleteCard(req, res, next) {
@@ -70,7 +66,6 @@ function deleteCard(req, res, next) {
     .then((foundCardData) => {
       if (!foundCardData.owner.equals(req.user._id)) return res.status(STATUS_FORBIDDEN).send({ message: 'Попытка удалить чужую карточку' });
       return Card.findByIdAndDelete(req.params.cardId)
-        .orFail(new NotFoundError('Карточка с указанным _id не найдена'))
         .then((dataFromDB) => res.status(STATUS_OK).send({ _id: dataFromDB._id }));
     })
     .catch((err) => {
