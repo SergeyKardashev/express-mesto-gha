@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const process = require('process');
 const helmet = require('helmet');
 const cookieParser = require('cookie-parser');
+// const path = require('path');
 const { errors } = require('celebrate');
 // const { Joi } = require('celebrate');
 // const { celebrate } = require('celebrate');
@@ -34,8 +35,17 @@ app.use(helmet());
 app.use(express.json());
 app.use(cookieParser());
 
-// =========== ADD STATIC ===============
+// =========== STATIC (start) ===============
 // app.use(express.static('public'));
+
+// из урока Отдача html и статичных файлов в Express
+// app.use(express.static(path.join(__dirname, 'public')));
+
+// подсказка из задания - другой способ (из урока Отдача html и статичных файлов в Express)
+// линтер ругается Use path.join() or path.resolve() instead of + to create paths
+// app.use(express.static(__dirname + '/public'));
+
+// =========== STATIC (end) ===============
 
 app.post('/signin', validateLogin, login);
 app.post('/signup', validateCreateUser, createUser); // register

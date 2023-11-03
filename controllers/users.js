@@ -2,7 +2,7 @@ const bcrypt = require('bcrypt');
 const User = require('../models/user');
 const generateToken = require('../utils/jwt');
 const {
-  STATUS_OK, STATUS_CREATED, MONGO_DUPLICATE_ERROR, STATUS_NOT_FOUND,
+  STATUS_CREATED, MONGO_DUPLICATE_ERROR, STATUS_NOT_FOUND,
 } = require('../constants/http-status');
 const NotFoundError = require('../errors/not-found-error');
 const BadRequestError = require('../errors/bad-request-error');
@@ -51,7 +51,7 @@ async function login(req, res, next) {
     if (!matched) throw new UnauthorizedError('Неверные почта или пароль');
     const token = generateToken({ _id: user._id });
 
-    return res.status(STATUS_OK)
+    return res
       .cookie('jwt', token, { maxAge: 604800000, httpOnly: true, sameSite: true })
       .send({ email: user.email, _id: user._id, message: 'token in cookie' })
       .end();
@@ -63,21 +63,20 @@ async function login(req, res, next) {
 
 function getAllUsers(req, res, next) {
   return User.find()
-    .then((data) => res.status(STATUS_OK).send(data))
+    .then((data) => res.send(data))
     .catch((err) => next(err));
 }
 
 function getUserById(req, res, next) {
   return User.findById(req.params.userId)
     .orFail(new NotFoundError('_id не найден'))
-    .then((dataFromDB) => res.status(STATUS_OK)
-      .send({
-        userId: dataFromDB._id,
-        email: dataFromDB.email,
-        name: dataFromDB.name,
-        about: dataFromDB.about,
-        avatar: dataFromDB.avatar,
-      }))
+    .then((dataFromDB) => res.send({
+      userId: dataFromDB._id,
+      email: dataFromDB.email,
+      name: dataFromDB.name,
+      about: dataFromDB.about,
+      avatar: dataFromDB.avatar,
+    }))
     .catch((err) => {
       if (err.statusCode === 404) return next(new NotFoundError('Пользователь по указанному _id не найден'));
       if (err.name === 'CastError') return next(new BadRequestError('Получение пользователя с некорректным id'));
@@ -88,14 +87,13 @@ function getUserById(req, res, next) {
 function getCurrentUserById(req, res, next) {
   return User.findById(req.user)
     .orFail(new NotFoundError('_id не найден'))
-    .then((dataFromDB) => res.status(STATUS_OK)
-      .send({
-        userId: dataFromDB._id,
-        email: dataFromDB.email,
-        name: dataFromDB.name,
-        about: dataFromDB.about,
-        avatar: dataFromDB.avatar,
-      }))
+    .then((dataFromDB) => res.send({
+      userId: dataFromDB._id,
+      email: dataFromDB.email,
+      name: dataFromDB.name,
+      about: dataFromDB.about,
+      avatar: dataFromDB.avatar,
+    }))
     .catch((err) => {
       if (err.statusCode === STATUS_NOT_FOUND) return next(new NotFoundError('Пользователь по указанному _id не найден'));
       if (err.name === 'CastError') return next(new BadRequestError('Получение пользователя с некорректным id'));
@@ -106,7 +104,7 @@ function getCurrentUserById(req, res, next) {
 function updateUser(req, res, next) {
   return User.findByIdAndUpdate(req.user._id, req.body, opts)
     .orFail(new NotFoundError())
-    .then((dataFromDB) => res.status(STATUS_OK).send({
+    .then((dataFromDB) => res.send({
       userId: dataFromDB._id,
       email: dataFromDB.email,
       name: dataFromDB.name,
@@ -125,7 +123,7 @@ function updateAvatar(req, res, next) {
   const updateObject = req.body;
   return User.findByIdAndUpdate(id, updateObject, opts)
     .orFail(new NotFoundError())
-    .then((avatarData) => res.status(STATUS_OK).send({ avatar: avatarData.avatar }))
+    .then((avatarData) => res.send({ avatar: avatarData.avatar }))
     .catch((err) => {
       if (err.name === 'CastError' || err.name === 'ValidationError') return next(new BadRequestError('Переданы некорректные данные при обновлении аватара'));
       if (err.statusCode === STATUS_NOT_FOUND) return next(new NotFoundError('Пользователь с указанным _id не найден'));
