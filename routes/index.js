@@ -12,6 +12,7 @@ const wrongRequestsRouter = require('./wrong-requests-router');
 // const PUBLIC_FOLDER = path.join(__dirname, 'public'); // из вебинара для статики
 // const INDEX_FILE = path.join(PUBLIC_FOLDER, 'index.html'); // из вебинара для статики
 
+appRouter.get('/signout', (req, res) => { res.clearCookie('jwt').send({ message: 'Выход' }); }); // по совету ревьювера
 appRouter.use('/users', usersRouter);
 appRouter.use('/cards', cardsRouter);
 appRouter.use('*', wrongRequestsRouter);

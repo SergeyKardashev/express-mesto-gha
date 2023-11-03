@@ -21,10 +21,9 @@ function createCard(req, res, next) {
       }))
     .catch((err) => {
       if (err.name === 'CastError' || err.name === 'ValidationError') {
-        next(new BadRequestError('Переданы некорректные данные при создании карточки'));
-      } else {
-        next(err);
+        return next(new BadRequestError('Переданы некорректные данные при создании карточки'));
       }
+      return next(err);
     });
 }
 
@@ -38,13 +37,12 @@ function likeCard(req, res, next) {
     .then((dataFromDB) => res.send(dataFromDB))
     .catch((err) => {
       if (err.message === 'Not found') {
-        next(new NotFoundError('Передан несуществующий _id карточки'));
+        return next(new NotFoundError('Передан несуществующий _id карточки'));
       }
       if (err.name === 'CastError' || err.name === 'ValidationError') {
-        next(new BadRequestError('Переданы некорректные данные для постановки/снятии лайка'));
-      } else {
-        next(err);
+        return next(new BadRequestError('Переданы некорректные данные для постановки/снятии лайка'));
       }
+      return next(err);
     });
 }
 
@@ -58,12 +56,12 @@ function dislikeCard(req, res, next) {
     .then((dataFromDB) => res.send(dataFromDB))
     .catch((err) => {
       if (err.name === 'CastError' || err.name === 'ValidationError') {
-        next(new BadRequestError('Переданы некорректные данные для постановки/снятии лайка'));
-      } else if (err.message === 'Not found') {
-        next(new NotFoundError('Передан несуществующий _id карточки'));
-      } else {
-        next(err);
+        return next(new BadRequestError('Переданы некорректные данные для постановки/снятии лайка'));
       }
+      if (err.message === 'Not found') {
+        return next(new NotFoundError('Передан несуществующий _id карточки'));
+      }
+      return next(err);
     });
 }
 
@@ -77,17 +75,17 @@ function deleteCard(req, res, next) {
   return findCardById(req.params.cardId)
     .then((foundCardData) => {
       if (!foundCardData.owner.equals(req.user._id)) {
-        next(new ForbiddenError('Попытка удалить чужую карточку'));
+        return next(new ForbiddenError('Попытка удалить чужую карточку'));
       }
       return Card.findByIdAndDelete(req.params.cardId)
         .then((dataFromDB) => res.send({ _id: dataFromDB._id }));
     })
     .catch((err) => {
       if (err.name === 'CastError' || err.name === 'ValidationError') {
-        next(new BadRequestError('Переданы некорректные данные'));
+        return next(new BadRequestError('Переданы некорректные данные'));
       }
       if (err.message === 'Not found') {
-        next(new NotFoundError('Карточка с указанным _id не найдена'));
+        return next(new NotFoundError('Карточка с указанным _id не найдена'));
       }
       return next(err);
     });
